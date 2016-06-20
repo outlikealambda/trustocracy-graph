@@ -2,6 +2,7 @@ neo4j-home
 *~
 \#*
 target
+plugins
 out
 .project
 .classpath
