@@ -1,4 +1,4 @@
-package outlikealambda.api;
+package outlikealambda.model;
 
 import java.util.HashMap;
 import java.util.List;
