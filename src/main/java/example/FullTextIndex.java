@@ -1,7 +1,5 @@
 package example;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -22,11 +20,12 @@ import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.PerformsWrites;
 import org.neo4j.procedure.Procedure;
+import outlikealambda.api.Journey;
+import outlikealambda.api.Person;
 import outlikealambda.traversal.RelationshipLabel;
 import outlikealambda.traversal.TotalWeightPathExpander;
 import outlikealambda.traversal.WeightedRelationshipSelectorFactory;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -327,23 +326,6 @@ public class FullTextIndex
         return label;
     }
 
-	private static class Journey {
-		private final Person trustee;
-		private final List<String> hops;
-
-		private Journey(Person trustee, List<String> hops) {
-			this.trustee = trustee;
-			this.hops = hops;
-		}
-
-		private Map<String, Object> toMap() {
-			Map<String, Object> asMap = new HashMap<>();
-			asMap.put("trustee", trustee.toMap());
-			asMap.put("hops", hops);
-
-			return asMap;
-		}
-	}
 
 	private static Function<Path, Journey> journeyFromPath(Map<Long, Pair<Node, Relationship>> trusteeRelationships) {
 		return p -> new Journey(
@@ -356,57 +338,8 @@ public class FullTextIndex
 		);
 	}
 
-	private class Qualifications {
-
-	}
-
 	private static Function<Path, Person> authorFromPath(Map<Long, Pair<Node, Relationship>> trusteeRelationships) {
 		return p -> fromNode(p.endNode(), trusteeRelationships);
-	}
-
-	private static class Person {
-		private final String name;
-		private final Long id;
-		private final String relationship;
-
-		private Person(String name, Long id, String relationship) {
-			this.name = name;
-			this.id = id;
-			this.relationship = relationship;
-		}
-
-		private Map<String, Object> toMap() {
-			Map<String, Object> asMap = new HashMap<>();
-			asMap.put("name", name);
-			asMap.put("id", id);
-			asMap.put("relationship", relationship);
-
-			return asMap;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (!(obj instanceof Person))
-				return false;
-			if (obj == this)
-				return true;
-
-			Person rhs = (Person) obj;
-			return new EqualsBuilder()
-					.append(name, rhs.name)
-					.append(id, rhs.id)
-					.append(relationship, rhs.relationship)
-					.isEquals();
-		}
-
-		@Override
-		public int hashCode() {
-			return new HashCodeBuilder(3, 71)
-					.append(name)
-					.append(id)
-					.append(relationship)
-					.toHashCode();
-		}
 	}
 
 	private static Person fromNode(Node n, Map<Long, Pair<Node, Relationship>> trusteeRelationships) {
@@ -422,6 +355,7 @@ public class FullTextIndex
 	}
 
 	private static class Connection {
+		// public for serialization
 		public final Map<String, Object> author;
 		public final List<Map<String, Object>> journeys;
 
