@@ -125,6 +125,20 @@ public class DistanceTraversalTest {
 		}
 	}
 
+	/**
+	 *     d --- od
+	 *    /        \
+	 *   b - e - oe |
+	 *  /          \|
+	 * a            T
+	 *  \          /| \
+	 *   c - f - of |  |
+	 *    \         /  |
+	 *     g - h - oh /
+	 *      \        /
+	 *       og ----
+	 *
+	 */
 	private String getCreateStatement() {
 		StringBuilder sb = new StringBuilder();
 
@@ -179,7 +193,7 @@ public class DistanceTraversalTest {
 //					System.out.println(record);
 //					return record;
 //				})
-				.map(record -> record.get("journeys"))
+				.map(record -> record.get("paths"))
 //				.map(journeys -> {
 //					System.out.println("hi");
 //					System.out.println(journeys.size());

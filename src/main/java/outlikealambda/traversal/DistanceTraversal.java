@@ -1,7 +1,5 @@
 package outlikealambda.traversal;
 
-import example.FullTextIndex;
-import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -18,27 +16,24 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
+import outlikealambda.model.Connection;
 import outlikealambda.model.Journey;
 import outlikealambda.model.Person;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 
 public class DistanceTraversal {
 	private static final Label personLabel = Label.label("Person");
-	private static final Label opinionLabel = Label.label("Opinion");
 	private static final Label topicLabel = Label.label("Topic");
 
 	// This field declares that we need a GraphDatabaseService
@@ -50,17 +45,6 @@ public class DistanceTraversal {
 	// standard log, normally found under `data/log/console.log`
 	@Context
 	public Log log;
-
-	@Procedure("test.traverse")
-	public void basicTraverse(@Name("id") long personId) {
-		db.traversalDescription()
-				.breadthFirst()
-				.relationships(RelationshipType.withName("TRUSTS"), Direction.OUTGOING)
-				.relationships(RelationshipType.withName("TRUSTS_EXPLICITLY"), Direction.OUTGOING)
-				.evaluator(Evaluators.toDepth(1))
-				.traverse(db.findNode(personLabel, "id", personId))
-				.forEach(this::printPath);
-	}
 
 	@Procedure("traverse.distance")
 	public Stream<Connection> go(
@@ -76,48 +60,62 @@ public class DistanceTraversal {
 
 		log.info("Got user connections");
 
-		Map<Long, Pair<Node, Relationship>> trusteeRelationships = StreamSupport.stream(userConnections.spliterator(), false)
+		Map<Node, Relationship> trusteeRelationships = StreamSupport.stream(userConnections.spliterator(), false)
 				.filter(RelationshipLabel.isInteresting(topicId))
-				.map(this::trusteeRelationship)
-				.collect(toMap(tr -> (long) tr.getLeft().getProperty("id"), Function.identity()));
+				.collect(toMap(Relationship::getEndNode, Function.identity()));
 
 		log.info(String.format("Got %d trustees", trusteeRelationships.size()));
 
 		Iterable<Relationship> opinionConnections = db.findNode(topicLabel, "id", topicId)
 				.getRelationships(Direction.INCOMING, RelationshipType.withName("ADDRESSES"));
 
-		Set<Node> authors = StreamSupport.stream(opinionConnections.spliterator(), false)
+		Map<Node, Node> authorOpinions = StreamSupport.stream(opinionConnections.spliterator(), false)
 				.map(Relationship::getStartNode)
 				.map(opinion -> opinion.getRelationships(Direction.INCOMING, RelationshipType.withName("OPINES")))
 				.flatMap(opinerConnections -> StreamSupport.stream(opinerConnections.spliterator(), false))
-				.map(Relationship::getStartNode)
-				.collect(toSet());
+				.collect(toMap(Relationship::getStartNode, Relationship::getEndNode));
 
-		log.info(String.format("Got %d authors", authors.size()));
+		log.info(String.format("Got %d authors", authorOpinions.size()));
 
 		PathExpander<Double> expander = new TotalWeightPathExpander(maxDistance, topicId, log);
-		Evaluator evaluator = Evaluators.includeWhereEndNodeIs(authors.toArray(new Node[authors.size()]));
+		Evaluator evaluator = Evaluators.includeWhereEndNodeIs(authorOpinions.keySet().toArray(new Node[authorOpinions.size()]));
 
-		Stream<Path> paths = trusteeRelationships.values().stream()
-				.map(trusteeRelationship -> traverse(trusteeRelationship.getLeft(), evaluator, expander, trusteeRelationship.getRight()))
-				.flatMap(Traverser::stream);
-
-		Map<Person, List<Journey>> groupedJourneys = trusteeRelationships.values().stream()
-				.map(trusteeRelationship -> traverse(trusteeRelationship.getLeft(), evaluator, expander, trusteeRelationship.getRight()))
+		return trusteeRelationships.entrySet().stream()
+				.map(trusteeRelationship -> traverse(trusteeRelationship.getKey(), evaluator, expander, trusteeRelationship.getValue()))
 				.flatMap(Traverser::stream)
-				.collect(groupingBy(
-						authorFromPath(trusteeRelationships),
-						mapping(journeyFromPath(trusteeRelationships), toList())
-						)
-				);
-
-		log.info(String.format("Got %d journey groups", groupedJourneys.size()));
-
-		return groupedJourneys.entrySet().stream().map(DistanceTraversal::toConnection);
+				.collect(groupingBy(Path::endNode))
+				.entrySet().stream()
+				.map(buildWritable(authorOpinions, trusteeRelationships));
 	}
 
-	private Pair<Node, Relationship> trusteeRelationship(Relationship toTrustee) {
-		return Pair.of(toTrustee.getEndNode(), toTrustee);
+	private static Function<Map.Entry<Node, List<Path>>, Connection> buildWritable(Map<Node, Node> authorOpinions, Map<Node, Relationship> trusteeRelationships) {
+		return authorPath -> buildConnection(
+				personFromNode(authorPath.getKey(), trusteeRelationships),
+				authorOpinions.get(authorPath.getKey()),
+				authorPath.getValue().stream()
+						.map(journeyFromPath(trusteeRelationships))
+						.collect(toList())
+		);
+	}
+
+	private static Connection buildConnection(Person author, Node opinion, List<Journey> journeys) {
+		return new Connection(
+			// Paths
+			journeys.stream()
+					.map(Journey::toMap)
+					.collect(toList()),
+			// Opinion
+			opinion.getAllProperties(),
+
+
+			author.toMap(),
+
+			// Qualifications
+			Optional.ofNullable(opinion.getSingleRelationship(RelationshipType.withName("QUALIFIES"), Direction.INCOMING))
+					.map(Relationship::getStartNode)
+					.map(Node::getAllProperties)
+					.orElse(null)
+		);
 	}
 
 	private Traverser traverse(Node friend, Evaluator evaluator, PathExpander<Double> expander, final Relationship relationship) {
@@ -138,68 +136,25 @@ public class DistanceTraversal {
 				.traverse(friend);
 	}
 
-	private void printPath(Path p) {
-		log.info("Path Start");
-		printNode(p.startNode());
-		p.relationships().forEach(relationship -> {
-			log.info(relationship.getType().name());
-			printNode(relationship.getEndNode());
-		});
-		log.info("Path End\n");
-	}
-
-	private void printNode(Node n) {
-		log.info(labelsToString(n));
-		log.info(n.getProperty("name").toString());
-	}
-
-	private static String labelsToString(Node n) {
-		return StreamSupport.stream(n.getLabels().spliterator(), false)
-				.map(Label::name)
-				.collect(joining(", "));
-	}
-
-	private static Function<Path, Journey> journeyFromPath(Map<Long, Pair<Node, Relationship>> trusteeRelationships) {
+	private static Function<Path, Journey> journeyFromPath(Map<Node, Relationship> trusteeRelationships) {
 		return p -> new Journey(
-				fromNode(p.startNode(), trusteeRelationships),
+				personFromNode(p.startNode(), trusteeRelationships),
 				StreamSupport.stream(p.relationships().spliterator(), false)
 						.map(Relationship::getType)
 						.map(RelationshipType::name)
 						.collect(toList())
-
 		);
 	}
 
-	private static Function<Path, Person> authorFromPath(Map<Long, Pair<Node, Relationship>> trusteeRelationships) {
-		return p -> fromNode(p.endNode(), trusteeRelationships);
-	}
-
-	private static Person fromNode(Node n, Map<Long, Pair<Node, Relationship>> trusteeRelationships) {
+	private static Person personFromNode(Node n, Map<Node, Relationship> trusteeRelationships) {
 		String name = (String) n.getProperty("name");
 		long id = (long) n.getProperty("id");
-		String relationshipString = Optional.ofNullable(trusteeRelationships.get(id))
-				.map(Pair::getRight)
+
+		String relationshipString = Optional.ofNullable(trusteeRelationships.get(n))
 				.map(Relationship::getType)
 				.map(RelationshipType::name)
 				.orElse("NONE");
 
 		return new Person(name, id, relationshipString);
-	}
-
-	public static class Connection {
-		// public for serialization
-		public final Map<String, Object> author;
-		public final List<Map<String, Object>> journeys;
-
-		private Connection(Person author, List<Journey> journeys) {
-			this.author = author.toMap();
-			this.journeys = journeys.stream()
-					.map(Journey::toMap)
-					.collect(toList());
-		}
-	}
-
-	private static Connection toConnection(Map.Entry<Person, List<Journey>> authorGroup) {
-		return new Connection(authorGroup.getKey(), authorGroup.getValue());
 	}
 }
