@@ -35,19 +35,19 @@ public class DistanceTraversalTest {
 			// a -> b -> d
 			// a -> b -> e
 			// a -> c -> f
-			assertEquals(3, result.list().size());
+			assertEquals(3, countConnected(result));
 
 			result = session.run("CALL traverse.distance(0, 0, 5)");
 
 			// additional path:
 			// a -> c -> g
-			assertEquals(4, result.list().size());
+			assertEquals(4, countConnected(result));
 
 			result = session.run("CALL traverse.distance(0, 0, 6)");
 
 			// additional path:
 			// a -> c -> g -> h
-			assertEquals(5, result.list().size());
+			assertEquals(5, countConnected(result));
 		}
 	}
 
@@ -62,14 +62,13 @@ public class DistanceTraversalTest {
 
 			StatementResult result = session.run("CALL traverse.distance(0, 0, 4)");
 
-			List<Record> records = result.list();
 
 			// expect paths:
 			// a -> b -> d
 			// a -> b -> e
 			// a -> c -> f
 			// a -> c -> d
-			assertEquals(3, records.size());
+			List<Record> records = result.list();
 			assertEquals(4, countTotalPaths(records));
 
 		}
@@ -90,7 +89,7 @@ public class DistanceTraversalTest {
 			// a -> b -> d
 			// a -> b -> e
 			// a -> c -> f
-			assertEquals(3, result.list().size());
+			assertEquals(3, countConnected(result));
 		}
 	}
 
@@ -111,7 +110,7 @@ public class DistanceTraversalTest {
 			// a -> c -> f
 			// a -> g
 			// a -> g -> h
-			assertEquals(5, result.list().size());
+			assertEquals(5, countConnected(result));
 		}
 	}
 
@@ -194,6 +193,7 @@ public class DistanceTraversalTest {
 //					return record;
 //				})
 				.map(record -> record.get("paths"))
+				.filter(v -> !v.isNull())
 //				.map(journeys -> {
 //					System.out.println("hi");
 //					System.out.println(journeys.size());
@@ -203,5 +203,12 @@ public class DistanceTraversalTest {
 				.map(Value::asList)
 				.mapToInt(List::size)
 				.sum();
+	}
+
+	private static long countConnected(StatementResult result) {
+		return result.list().stream()
+				.map(record -> record.get("paths"))
+				.filter(v -> !v.isNull())
+				.count();
 	}
 }

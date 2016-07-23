@@ -24,11 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -80,21 +80,55 @@ public class DistanceTraversal {
 		PathExpander<Double> expander = new TotalWeightPathExpander(maxDistance, topicId, log);
 		Evaluator evaluator = Evaluators.includeWhereEndNodeIs(authorOpinions.keySet().toArray(new Node[authorOpinions.size()]));
 
-		return trusteeRelationships.entrySet().stream()
-				.map(trusteeRelationship -> traverse(trusteeRelationship.getKey(), evaluator, expander, trusteeRelationship.getValue()))
+		Map<Node, List<Path>> connectedPaths = trusteeRelationships.entrySet().stream()
+				.map(trusteeRelationship -> traverse(
+						trusteeRelationship.getKey(),
+						evaluator,
+						expander,
+						trusteeRelationship.getValue())
+				)
 				.flatMap(Traverser::stream)
-				.collect(groupingBy(Path::endNode))
-				.entrySet().stream()
+				.collect(groupingBy(Path::endNode));
+
+		Stream<Connection> unconnected = authorOpinions.entrySet().stream()
+				.filter(ao -> !connectedPaths.containsKey(ao.getKey()))
+				.map(ao -> buildUnconnected(personFromNode(ao.getKey()), ao.getValue()));
+
+		Stream<Connection> connected = connectedPaths.entrySet().stream()
 				.map(buildWritable(authorOpinions, trusteeRelationships));
+
+		return Stream.concat(connected, unconnected);
 	}
 
-	private static Function<Map.Entry<Node, List<Path>>, Connection> buildWritable(Map<Node, Node> authorOpinions, Map<Node, Relationship> trusteeRelationships) {
+	private static Function<Map.Entry<Node, List<Path>>, Connection> buildWritable(
+			Map<Node, Node> authorOpinions,
+			Map<Node, Relationship> trusteeRelationships
+	) {
 		return authorPath -> buildConnection(
 				personFromNode(authorPath.getKey(), trusteeRelationships),
 				authorOpinions.get(authorPath.getKey()),
 				authorPath.getValue().stream()
 						.map(journeyFromPath(trusteeRelationships))
 						.collect(toList())
+		);
+	}
+
+	private static Connection buildUnconnected(Person author, Node opinion) {
+		return new Connection(
+				// no path!
+				null,
+
+				// Opinion
+				opinion.getAllProperties(),
+
+
+				author.toMap(),
+
+				// Qualifications
+				Optional.ofNullable(opinion.getSingleRelationship(RelationshipType.withName("QUALIFIES"), Direction.INCOMING))
+						.map(Relationship::getStartNode)
+						.map(Node::getAllProperties)
+						.orElse(null)
 		);
 	}
 
@@ -156,5 +190,16 @@ public class DistanceTraversal {
 				.orElse("NONE");
 
 		return new Person(name, id, relationshipString);
+	}
+
+	private static Person personFromNode(Node n) {
+		String name = (String) n.getProperty("name");
+		long id = (long) n.getProperty("id");
+
+		return new Person(name, id, "NONE");
+	}
+
+	private static <T> Predicate<T> not(Predicate<T> pred) {
+		return input -> !pred.test(input);
 	}
 }
