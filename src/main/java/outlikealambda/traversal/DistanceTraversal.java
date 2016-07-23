@@ -11,12 +11,14 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.traversal.Evaluator;
 import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.graphdb.traversal.InitialBranchState;
+import org.neo4j.graphdb.traversal.PathEvaluator;
 import org.neo4j.graphdb.traversal.Traverser;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.model.Connection;
+import outlikealambda.model.Influence;
 import outlikealambda.model.Journey;
 import outlikealambda.model.Person;
 
@@ -46,8 +48,48 @@ public class DistanceTraversal {
 	@Context
 	public Log log;
 
+	@Procedure("traverse.influence")
+	public Stream<Influence> calculateInfluence(
+			@Name("userId") long personId,
+			@Name("topicId") long topicId,
+			@Name("maxDistance") Double maxDistance
+	) {
+		log.info("calculating influence for " + personId + topicId);
+
+		Node user = db.findNode(personLabel, "id", personId);
+
+		/**
+		 * this is kind of hacky.  I originally pruned branches in the TotalWeightPathExpander by checking
+		 * total distance.  Now I _also_ check total distance in the Evaluator, as there are no
+		 * end nodes to look for.
+		 *
+		 * TODO: I wonder if this would be simpler/faster to just do iteratively, since we don't need paths
+		 *
+		 */
+		PathExpander<Double> expander = new TotalWeightPathExpander(maxDistance, topicId, log);
+		PathEvaluator<Double> evaluator = DistanceEvaluators.withinDistance(maxDistance);
+
+		long influence = db.traversalDescription()
+				.order(WeightedRelationshipSelectorFactory.create())
+				.expand(expander, new InitialBranchState<Double>() {
+					@Override public Double initialState(Path path) {
+						return 0d;
+					}
+
+					@Override public InitialBranchState<Double> reverse() {
+						return this;
+					}
+				})
+				.evaluator(evaluator)
+				.traverse(user)
+				.stream()
+				.count();
+
+		return Stream.of(new Influence(personId, topicId, influence));
+	}
+
 	@Procedure("traverse.distance")
-	public Stream<Connection> go(
+	public Stream<Connection> findOpinions(
 			@Name("userId") long personId,
 			@Name("topicId") long topicId,
 			@Name("maxDistance") Double maxDistance

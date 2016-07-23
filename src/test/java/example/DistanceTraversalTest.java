@@ -23,9 +23,10 @@ public class DistanceTraversalTest {
 
 	@Test
 	public void basicDistanceTraversal() {
-
-		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig())) {
-			Session session = driver.session();
+		try (
+				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()
+		) {
 
 			session.run(getCreateStatement());
 
@@ -53,8 +54,10 @@ public class DistanceTraversalTest {
 
 	@Test
 	public void multiplePathsAreGrouped() {
-		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig())) {
-			Session session = driver.session();
+		try (
+				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()
+		) {
 
 			session.run(getCreateStatement());
 
@@ -76,8 +79,10 @@ public class DistanceTraversalTest {
 
 	@Test
 	public void delegatesRelationshipWithWrongTopicIdIsNotFollowed() {
-		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig())) {
-			Session session = driver.session();
+		try (
+				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()
+		) {
 
 			session.run(getCreateStatement());
 
@@ -95,8 +100,10 @@ public class DistanceTraversalTest {
 
 	@Test
 	public void delegatesRelationshipWithCorrectTopicIdIsFollowed() {
-		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig())) {
-			Session session = driver.session();
+		try (
+				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()
+		) {
 
 			session.run(getCreateStatement());
 
@@ -115,12 +122,44 @@ public class DistanceTraversalTest {
 	}
 
 	@Test
-	public void ltiplePathsAreGrouped() {
-		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig())) {
-			Session session = driver.session();
+	public void testInfluence() {
+		try (
+				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()
+		) {
 
 			session.run(getCreateStatement());
 
+			StatementResult result;
+
+			result = session.run("CALL traverse.influence(0, 0, 1)");
+			assertEquals(1, result.single().get("influence").asInt());
+
+			result = session.run("CALL traverse.influence(0, 0, 2)");
+			assertEquals(2, result.single().get("influence").asInt());
+
+			result = session.run("CALL traverse.influence(0, 0, 3)");
+			assertEquals(4, result.single().get("influence").asInt());
+
+			result = session.run("CALL traverse.influence(0, 0, 4)");
+			assertEquals(6, result.single().get("influence").asInt());
+		}
+	}
+
+	@Test
+	public void testInfluenceCountsDelegateRelationshipsAsZero() {
+		try (
+				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()
+		) {
+
+			session.run(getCreateStatement());
+
+			session.run("MATCH (a:Person{id:0}), (g:Person{id:6}) CREATE (a)-[:DELEGATES{topicId:0}]->(g)");
+
+			// should now have two nodes (reflexive + delegate) less than one from the user
+			StatementResult result = session.run("CALL traverse.influence(0, 0, 1)");
+			assertEquals(2, result.single().get("influence").asInt());
 		}
 	}
 
