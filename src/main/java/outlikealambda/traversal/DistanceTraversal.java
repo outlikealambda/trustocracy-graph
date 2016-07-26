@@ -63,14 +63,20 @@ public class DistanceTraversal {
 	@Procedure("influence.opinion")
 	public Stream<Influence> opinionInfluence(
 			@Name("userId") long opinionId,
-			@Name("topicId") long topicId,
 			@Name("maxDistance") Double maxDistance
 	) {
-		Node author = db.findNode(OPINION_LABEL, "id", opinionId)
+		Node opinion = db.findNode(OPINION_LABEL, "id", opinionId);
+
+		Node author = opinion
 				.getSingleRelationship(RelationshipType.withName("OPINES"), Direction.INCOMING)
 				.getStartNode();
 
+		Node topic = opinion
+				.getSingleRelationship(RelationshipType.withName("ADDRESSES"), Direction.OUTGOING)
+				.getEndNode();
+
 		long authorId = (long) author.getProperty("id");
+		long topicId = (long) topic.getProperty("id");
 
 		return calculatePersonInfluence(authorId, topicId, maxDistance);
 	}

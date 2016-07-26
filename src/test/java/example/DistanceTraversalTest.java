@@ -181,7 +181,7 @@ public class DistanceTraversalTest {
 			StatementResult personResult = session.run("CALL influence.person(7, 0, 6)");
 			assertEquals(5, personResult.single().get("influence").asInt());
 
-			StatementResult opinionResult = session.run("CALL influence.opinion(7, 0, 6)");
+			StatementResult opinionResult = session.run("CALL influence.opinion(7, 6)");
 			assertEquals(5, opinionResult.single().get("influence").asInt());
 		}
 	}
