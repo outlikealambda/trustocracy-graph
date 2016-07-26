@@ -132,17 +132,17 @@ public class DistanceTraversalTest {
 
 			StatementResult result;
 
-			result = session.run("CALL traverse.influence(0, 0, 1)");
+			result = session.run("CALL influence.person(7, 0, 1)");
 			assertEquals(1, result.single().get("influence").asInt());
 
-			result = session.run("CALL traverse.influence(0, 0, 2)");
+			result = session.run("CALL influence.person(7, 0, 2)");
 			assertEquals(2, result.single().get("influence").asInt());
 
-			result = session.run("CALL traverse.influence(0, 0, 3)");
-			assertEquals(4, result.single().get("influence").asInt());
+			result = session.run("CALL influence.person(7, 0, 4)");
+			assertEquals(3, result.single().get("influence").asInt());
 
-			result = session.run("CALL traverse.influence(0, 0, 4)");
-			assertEquals(6, result.single().get("influence").asInt());
+			result = session.run("CALL influence.person(7, 0, 6)");
+			assertEquals(4, result.single().get("influence").asInt());
 		}
 	}
 
@@ -158,8 +158,31 @@ public class DistanceTraversalTest {
 			session.run("MATCH (a:Person{id:0}), (g:Person{id:6}) CREATE (a)-[:DELEGATES{topicId:0}]->(g)");
 
 			// should now have two nodes (reflexive + delegate) less than one from the user
-			StatementResult result = session.run("CALL traverse.influence(0, 0, 1)");
+			StatementResult result = session.run("CALL influence.person(6, 0, 1)");
 			assertEquals(2, result.single().get("influence").asInt());
+		}
+	}
+
+	@Test
+	public void testInfluenceFromOpinionId() {
+		try (
+				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()
+		) {
+
+			session.run(getCreateStatement());
+
+			session.run("MATCH (b:Person{id:0}), (g:Person{id:6}) CREATE (a)-[:DELEGATES{topicId:0}]->(g)");
+
+			/**
+			 * both h:Person {id:7} and oh:Opinion {id:7} should have 5 nodes within a
+			 * distance of 6: [h, g, c, a, b] (b is directly delegated above)
+			 */
+			StatementResult personResult = session.run("CALL influence.person(7, 0, 6)");
+			assertEquals(5, personResult.single().get("influence").asInt());
+
+			StatementResult opinionResult = session.run("CALL influence.opinion(7, 0, 6)");
+			assertEquals(5, opinionResult.single().get("influence").asInt());
 		}
 	}
 

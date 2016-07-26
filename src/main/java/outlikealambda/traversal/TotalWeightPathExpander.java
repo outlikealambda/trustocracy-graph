@@ -14,11 +14,13 @@ import java.util.stream.StreamSupport;
 public class TotalWeightPathExpander implements PathExpander<Double> {
 	private final Double maxDistance;
 	private final long topicId;
+	private final Direction expansionDirection;
 	private final Log log;
 
-	public TotalWeightPathExpander(Double maxDistance, long topicId, Log log) {
+	public TotalWeightPathExpander(Double maxDistance, long topicId, Direction expansionDirection, Log log) {
 		this.maxDistance = maxDistance;
 		this.topicId = topicId;
+		this.expansionDirection = expansionDirection;
 		this.log = log;
 	}
 
@@ -43,7 +45,7 @@ public class TotalWeightPathExpander implements PathExpander<Double> {
 
 		state.setState(totalCost);
 
-		return StreamSupport.stream(path.endNode().getRelationships(Direction.OUTGOING).spliterator(), false)
+		return StreamSupport.stream(path.endNode().getRelationships(expansionDirection).spliterator(), false)
 				.filter(RelationshipLabel.isInteresting(topicId))
 				.filter(r -> RelationshipLabel.getCost(r) + totalCost < maxDistance)
 				.collect(Collectors.toList());

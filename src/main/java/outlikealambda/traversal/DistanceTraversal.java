@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -35,8 +34,9 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 public class DistanceTraversal {
-	private static final Label personLabel = Label.label("Person");
-	private static final Label topicLabel = Label.label("Topic");
+	private static final Label PERSON_LABEL = Label.label("Person");
+	private static final Label TOPIC_LABEL = Label.label("Topic");
+	private static final Label OPINION_LABEL = Label.label("Opinion");
 
 	// This field declares that we need a GraphDatabaseService
 	// as context when any procedure in this class is invoked
@@ -48,15 +48,35 @@ public class DistanceTraversal {
 	@Context
 	public Log log;
 
-	@Procedure("traverse.influence")
-	public Stream<Influence> calculateInfluence(
+	@Procedure("influence.person")
+	public Stream<Influence> personInfluence(
 			@Name("userId") long personId,
 			@Name("topicId") long topicId,
 			@Name("maxDistance") Double maxDistance
 	) {
 		log.info("calculating influence for " + personId + topicId);
 
-		Node user = db.findNode(personLabel, "id", personId);
+
+		return calculatePersonInfluence(personId, topicId, maxDistance);
+	}
+
+	@Procedure("influence.opinion")
+	public Stream<Influence> opinionInfluence(
+			@Name("userId") long opinionId,
+			@Name("topicId") long topicId,
+			@Name("maxDistance") Double maxDistance
+	) {
+		Node author = db.findNode(OPINION_LABEL, "id", opinionId)
+				.getSingleRelationship(RelationshipType.withName("OPINES"), Direction.INCOMING)
+				.getStartNode();
+
+		long authorId = (long) author.getProperty("id");
+
+		return calculatePersonInfluence(authorId, topicId, maxDistance);
+	}
+
+	private Stream<Influence> calculatePersonInfluence(long personId, long topicId, Double maxDistance) {
+		Node user = db.findNode(PERSON_LABEL, "id", personId);
 
 		/**
 		 * this is kind of hacky.  I originally pruned branches in the TotalWeightPathExpander by checking
@@ -66,7 +86,7 @@ public class DistanceTraversal {
 		 * TODO: I wonder if this would be simpler/faster to just do iteratively, since we don't need paths
 		 *
 		 */
-		PathExpander<Double> expander = new TotalWeightPathExpander(maxDistance, topicId, log);
+		PathExpander<Double> expander = new TotalWeightPathExpander(maxDistance, topicId, Direction.INCOMING, log);
 		PathEvaluator<Double> evaluator = DistanceEvaluators.withinDistance(maxDistance);
 
 		long influence = db.traversalDescription()
@@ -86,6 +106,7 @@ public class DistanceTraversal {
 				.count();
 
 		return Stream.of(new Influence(personId, topicId, influence));
+
 	}
 
 	@Procedure("traverse.distance")
@@ -97,7 +118,7 @@ public class DistanceTraversal {
 
 		log.info("Starting traversal for " + personId + " : " + topicId);
 
-		Iterable<Relationship> userConnections = db.findNode(personLabel, "id", personId)
+		Iterable<Relationship> userConnections = db.findNode(PERSON_LABEL, "id", personId)
 				.getRelationships(Direction.OUTGOING);
 
 		log.info("Got user connections");
@@ -108,7 +129,7 @@ public class DistanceTraversal {
 
 		log.info(String.format("Got %d trustees", trusteeRelationships.size()));
 
-		Iterable<Relationship> opinionConnections = db.findNode(topicLabel, "id", topicId)
+		Iterable<Relationship> opinionConnections = db.findNode(TOPIC_LABEL, "id", topicId)
 				.getRelationships(Direction.INCOMING, RelationshipType.withName("ADDRESSES"));
 
 		Map<Node, Node> authorOpinions = StreamSupport.stream(opinionConnections.spliterator(), false)
@@ -119,7 +140,7 @@ public class DistanceTraversal {
 
 		log.info(String.format("Got %d authors", authorOpinions.size()));
 
-		PathExpander<Double> expander = new TotalWeightPathExpander(maxDistance, topicId, log);
+		PathExpander<Double> expander = new TotalWeightPathExpander(maxDistance, topicId, Direction.OUTGOING, log);
 		Evaluator evaluator = Evaluators.includeWhereEndNodeIs(authorOpinions.keySet().toArray(new Node[authorOpinions.size()]));
 
 		Map<Node, List<Path>> connectedPaths = trusteeRelationships.entrySet().stream()
@@ -239,9 +260,5 @@ public class DistanceTraversal {
 		long id = (long) n.getProperty("id");
 
 		return new Person(name, id, "NONE");
-	}
-
-	private static <T> Predicate<T> not(Predicate<T> pred) {
-		return input -> !pred.test(input);
 	}
 }
