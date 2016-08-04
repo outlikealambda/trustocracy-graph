@@ -115,12 +115,27 @@ public class DistanceTraversal {
 
 	}
 
+
 	@Procedure("traverse.distance")
-	public Stream<Connection> findOpinions(
+	public Stream<Connection> findConnected(
 			@Name("userId") long personId,
 			@Name("topicId") long topicId,
 			@Name("maxDistance") Double maxDistance
 	) {
+		return findOpinions(personId, topicId, maxDistance, false);
+	}
+
+	@Procedure("traverse.distance.withUnconnected")
+	public Stream<Connection> findAll(
+			@Name("userId") long personId,
+			@Name("topicId") long topicId,
+			@Name("maxDistance") Double maxDistance
+	) {
+		return findOpinions(personId, topicId, maxDistance, true);
+
+	}
+
+	private Stream<Connection> findOpinions(long personId, long topicId, Double maxDistance, boolean includeUnconnected) {
 
 		log.info("Starting traversal for " + personId + " : " + topicId);
 
@@ -159,14 +174,18 @@ public class DistanceTraversal {
 				.flatMap(Traverser::stream)
 				.collect(groupingBy(Path::endNode));
 
-		Stream<Connection> unconnected = authorOpinions.entrySet().stream()
-				.filter(ao -> !connectedPaths.containsKey(ao.getKey()))
-				.map(ao -> buildUnconnected(personFromNode(ao.getKey()), ao.getValue()));
-
 		Stream<Connection> connected = connectedPaths.entrySet().stream()
 				.map(buildWritable(authorOpinions, trusteeRelationships));
 
-		return Stream.concat(connected, unconnected);
+		if (includeUnconnected) {
+			Stream<Connection> unconnected = authorOpinions.entrySet().stream()
+					.filter(ao -> !connectedPaths.containsKey(ao.getKey()))
+					.map(ao -> buildUnconnected(personFromNode(ao.getKey()), ao.getValue()));
+
+			return Stream.concat(connected, unconnected);
+		} else {
+			return connected;
+		}
 	}
 
 	private static Function<Map.Entry<Node, List<Path>>, Connection> buildWritable(

@@ -78,6 +78,27 @@ public class DistanceTraversalTest {
 	}
 
 	@Test
+	public void withUnconnectedReturnsAllOpinions() {
+		try (
+				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()
+		) {
+
+			session.run(getCreateStatement());
+
+			session.run("MATCH (c:Person{id:2}), (d:Person{id:3}) CREATE (c)-[:TRUSTS_EXPLICITLY]->(d)");
+
+			// distance of 1 still returns all opinions
+			StatementResult result = session.run("CALL traverse.distance.withUnconnected(0, 0, 1)");
+
+
+			List<Record> records = result.list();
+			assertEquals(5, records.size());
+
+		}
+	}
+
+	@Test
 	public void delegatesRelationshipWithWrongTopicIdIsNotFollowed() {
 		try (
 				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
