@@ -1,4 +1,4 @@
-package outlikealambda.traversal;
+package outlikealambda.traversal.expand;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Path;
@@ -6,6 +6,7 @@ import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.traversal.BranchState;
 import org.neo4j.logging.Log;
+import outlikealambda.traversal.RelationshipLabel;
 
 import java.util.Optional;
 import java.util.stream.Collectors;

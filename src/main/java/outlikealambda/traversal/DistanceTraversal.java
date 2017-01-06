@@ -21,6 +21,7 @@ import outlikealambda.model.Connection;
 import outlikealambda.model.Influence;
 import outlikealambda.model.Journey;
 import outlikealambda.model.Person;
+import outlikealambda.traversal.expand.TotalWeightPathExpander;
 
 import java.util.List;
 import java.util.Map;
