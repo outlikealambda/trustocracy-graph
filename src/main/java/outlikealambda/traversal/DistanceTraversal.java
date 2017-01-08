@@ -28,11 +28,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static outlikealambda.traversal.TraversalUtils.goStream;
 
 public class DistanceTraversal {
 	private static final Label PERSON_LABEL = Label.label("Person");
@@ -145,7 +145,7 @@ public class DistanceTraversal {
 
 		log.info("Got user connections");
 
-		Map<Node, Relationship> trusteeRelationships = StreamSupport.stream(userConnections.spliterator(), false)
+		Map<Node, Relationship> trusteeRelationships = goStream(userConnections)
 				.filter(RelationshipLabel.isInteresting(topicId))
 				.collect(toMap(Relationship::getEndNode, Function.identity()));
 
@@ -154,10 +154,10 @@ public class DistanceTraversal {
 		Iterable<Relationship> opinionConnections = db.findNode(TOPIC_LABEL, "id", topicId)
 				.getRelationships(Direction.INCOMING, RelationshipType.withName("ADDRESSES"));
 
-		Map<Node, Node> authorOpinions = StreamSupport.stream(opinionConnections.spliterator(), false)
+		Map<Node, Node> authorOpinions = goStream(opinionConnections)
 				.map(Relationship::getStartNode)
 				.map(opinion -> opinion.getRelationships(Direction.INCOMING, RelationshipType.withName("OPINES")))
-				.flatMap(opinerConnections -> StreamSupport.stream(opinerConnections.spliterator(), false))
+				.flatMap(TraversalUtils::goStream)
 				.collect(toMap(Relationship::getStartNode, Relationship::getEndNode));
 
 		log.info(String.format("Got %d authors", authorOpinions.size()));
@@ -262,7 +262,7 @@ public class DistanceTraversal {
 	private static Function<Path, Journey> journeyFromPath(Map<Node, Relationship> trusteeRelationships) {
 		return p -> new Journey(
 				personFromNode(p.startNode(), trusteeRelationships),
-				StreamSupport.stream(p.relationships().spliterator(), false)
+				goStream(p.relationships())
 						.map(Relationship::getType)
 						.map(RelationshipType::name)
 						.collect(toList())
