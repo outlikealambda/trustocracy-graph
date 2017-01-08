@@ -2,19 +2,29 @@ package outlikealambda.model;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class Person {
 	private final String name;
 	private final Long id;
 	private final String relationship;
+	private final int rank;
 
 	public Person(String name, Long id, String relationship) {
+		this(name, id, relationship, -1);
+	}
+
+	public Person(String name, Long id, String relationship, int rank) {
 		this.name = name;
 		this.id = id;
 		this.relationship = relationship;
+		this.rank = rank;
 	}
 
 	public Map<String, Object> toMap() {
@@ -22,6 +32,7 @@ public class Person {
 		asMap.put("name", name);
 		asMap.put("id", id);
 		asMap.put("relationship", relationship);
+		asMap.put("rank", rank);
 
 		return asMap;
 	}
@@ -48,5 +59,23 @@ public class Person {
 				.append(id)
 				.append(relationship)
 				.toHashCode();
+	}
+
+	public static Person create(Node n) {
+		return create(n, null);
+	}
+
+	public static Person create(Node n, Relationship r) {
+		String name = (String) n.getProperty("name");
+		long id = (long) n.getProperty("id");
+		String relationship = Optional.ofNullable(r)
+				.map(Relationship::getType)
+				.map(RelationshipType::name)
+				.orElse("NONE");
+		int rank = Optional.ofNullable(r)
+				.map(rel -> (Integer) rel.getProperty("rank"))
+				.orElse(-1);
+
+		return new Person(name, id, relationship, rank);
 	}
 }
