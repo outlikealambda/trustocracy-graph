@@ -14,13 +14,13 @@ public class Person {
 	private final String name;
 	private final Long id;
 	private final String relationship;
-	private final int rank;
+	private final Long rank;
 
 	public Person(String name, Long id, String relationship) {
-		this(name, id, relationship, -1);
+		this(name, id, relationship, -1L);
 	}
 
-	public Person(String name, Long id, String relationship, int rank) {
+	public Person(String name, Long id, String relationship, Long rank) {
 		this.name = name;
 		this.id = id;
 		this.relationship = relationship;
@@ -67,14 +67,17 @@ public class Person {
 
 	public static Person create(Node n, Relationship r) {
 		String name = (String) n.getProperty("name");
+
 		long id = (long) n.getProperty("id");
+
 		String relationship = Optional.ofNullable(r)
 				.map(Relationship::getType)
 				.map(RelationshipType::name)
 				.orElse("NONE");
-		int rank = Optional.ofNullable(r)
-				.map(rel -> (Integer) rel.getProperty("rank"))
-				.orElse(-1);
+
+		Long rank = Optional.ofNullable(r)
+				.map(rel -> (Long) rel.getProperty("rank"))
+				.orElse(-1L);
 
 		return new Person(name, id, relationship, rank);
 	}
