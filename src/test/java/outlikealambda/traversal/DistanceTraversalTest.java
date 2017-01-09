@@ -10,7 +10,6 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.harness.junit.Neo4jRule;
-import outlikealambda.traversal.DistanceTraversal;
 
 import java.util.List;
 
