@@ -7,9 +7,11 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
 
+import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -38,9 +40,9 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isCyclic = ConnectivityUtils.isCycle(startNode, 1);
+			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, 1);
 
-			assertFalse(isCyclic);
+			assertTrue(cycle.isEmpty());
 
 			tx.failure();
 		}
@@ -67,9 +69,9 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isCyclic = ConnectivityUtils.isCycle(startNode, 1);
+			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, 1);
 
-			assertTrue(isCyclic);
+			assertEquals(3, cycle.size());
 
 			tx.failure();
 		}
@@ -100,9 +102,9 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isCyclic = ConnectivityUtils.isCycle(startNode, 1);
+			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, 1);
 
-			assertFalse(isCyclic);
+			assertTrue(cycle.isEmpty());
 
 			tx.failure();
 		}
