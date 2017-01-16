@@ -15,6 +15,21 @@ import java.util.stream.Stream;
 
 public final class ConnectivityUtils {
 
+	public static boolean isConnected(Node n, Relationships.Topic topic) {
+		if (n.hasRelationship(
+				Direction.OUTGOING,
+				topic.getAuthoredType(),
+				topic.getProvisionalType())) {
+			return true;
+		}
+
+		return Optional.of(n)
+				.map(current -> current.getSingleRelationship(topic.getManualType(), Direction.OUTGOING))
+				.map(Relationship::getEndNode)
+				.map(parent -> isConnected(parent, topic))
+				.orElse(false);
+	}
+
 	// empty collection if no cycle
 	// no guaranteed order; switch to LinkedHashSet if that's necessary
 	public static Collection<Node> getCycle(Node node, Relationships.Topic topic) {
