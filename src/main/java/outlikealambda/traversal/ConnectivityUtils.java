@@ -13,14 +13,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static outlikealambda.traversal.Relationships.Types.manual;
-import static outlikealambda.traversal.Relationships.Types.provisional;
-
 public final class ConnectivityUtils {
 
 	// empty collection if no cycle
 	// no guaranteed order; switch to LinkedHashSet if that's necessary
-	public static Collection<Node> getCycle(Node node, int topic) {
+	public static Collection<Node> getCycle(Node node, Relationships.Topic topic) {
 		LinkedHashSet<Node> visited = new LinkedHashSet<>();
 		Node current = node;
 		visited.add(node);
@@ -48,9 +45,13 @@ public final class ConnectivityUtils {
 		}
 	}
 
-	private static Optional<Relationship> getSelected(Node n, int topic) {
+	private static Optional<Relationship> getSelected(Node n, Relationships.Topic topic) {
 		return Optional.of(n)
-				.map(node -> node.getRelationships(Direction.OUTGOING, manual(topic), provisional(topic)))
+				.map(node -> node.getRelationships(
+						Direction.OUTGOING,
+						topic.getManualType(),
+						topic.getProvisionalType())
+				)
 				.map(TraversalUtils::goStream)
 				.flatMap(Stream::findFirst);
 	}

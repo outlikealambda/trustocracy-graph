@@ -6,13 +6,13 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
+import outlikealambda.traversal.Relationships.Topic;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ConnectivityUtilsTest {
@@ -40,7 +40,7 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, 1);
+			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, new Topic(1));
 
 			assertTrue(cycle.isEmpty());
 
