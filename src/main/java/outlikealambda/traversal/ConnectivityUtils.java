@@ -13,6 +13,14 @@ import java.util.stream.Stream;
 
 public final class ConnectivityUtils {
 
+	public static Optional<Node> getProvisionTarget(Node n, Relationships.Topic topic) {
+		return TraversalUtils.goStream(n.getRelationships(Direction.OUTGOING, topic.getRankedType()))
+				.sorted(rankComparator)
+				.map(Relationship::getEndNode)
+				.filter(parent -> isConnected(parent, topic))
+				.findFirst();
+	}
+
 	public static boolean isConnected(Node n, Relationships.Topic topic) {
 		if (n.hasRelationship(
 				Direction.OUTGOING,
