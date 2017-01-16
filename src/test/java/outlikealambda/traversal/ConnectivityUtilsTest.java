@@ -12,12 +12,117 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ConnectivityUtilsTest {
 
 	@Rule
 	public Neo4jRule neo4j = new Neo4jRule();
+
+	@Test
+	public void testRankedOnlyIsNotConnected() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String r = "RANKED";
+
+			String acyclicCreate = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					connect(a, b, r))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(acyclicCreate);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, new Relationships.Topic(1));
+
+			assertFalse(isConnected);
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void testIsConnectedViaAuthored() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String r = "AUTHORED_1";
+			String opinion = "opinion";
+
+			String acyclicCreate = Stream.of(
+					"CREATE" + person(a, 1),
+					opinion(opinion, 2),
+					connect(a, opinion, r))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(acyclicCreate);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, new Relationships.Topic(1));
+
+			assertTrue(isConnected);
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void testIsConnectedViaProvisional() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String r = "PROVISIONAL_1";
+			String b = "b";
+
+			String acyclicCreate = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					connect(a, b, r))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(acyclicCreate);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, new Relationships.Topic(1));
+
+			assertTrue(isConnected);
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void testIsConnectedThroughManualConnection() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+			String r1= "MANUAL_1";
+			String r2= "PROVISIONAL_1";
+
+			String acyclicCreate = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 2),
+					connect(a, b, r1),
+					connect(b, c, r2))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(acyclicCreate);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, new Relationships.Topic(1));
+
+			assertTrue(isConnected);
+
+			tx.failure();
+		}
+	}
 
 	@Test
 	public void testNoCycle() {
@@ -107,12 +212,15 @@ public class ConnectivityUtilsTest {
 
 			tx.failure();
 		}
-
 	}
 
 
 	private static String person(String a, int id) {
 		return String.format("(%s:Person {name:'%s', id:%d})", a, a, id);
+	}
+
+	private static String opinion(String a, int id) {
+		return String.format("(%s:Opinion {id:%d})", a, id);
 	}
 
 	private static String connect(String a, String b, String r) {
