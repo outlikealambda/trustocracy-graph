@@ -8,6 +8,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,6 +20,102 @@ public class ConnectivityUtilsTest {
 
 	@Rule
 	public Neo4jRule neo4j = new Neo4jRule();
+
+	@Test
+	public void basicProvisionalTarget() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+
+			String connected = "connected";
+
+			String provisional = "PROVISIONAL_1";
+
+			String acyclicCreate = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					person(connected, 4),
+					connectRanked(a, b, 1),
+					connectRanked(a, c, 2),
+					connect(b, connected, provisional))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(acyclicCreate);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+
+			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, new Relationships.Topic(1));
+
+			assertTrue(provisionalTarget.isPresent());
+			assertEquals(b, provisionalTarget.get().getProperty("name"));
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void provisionalTargetSecondOption() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+
+			String connected = "connected";
+
+			String provisional = "PROVISIONAL_1";
+
+			String acyclicCreate = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					person(connected, 4),
+					connectRanked(a, b, 1),
+					connectRanked(a, c, 2),
+					connect(c, connected, provisional))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(acyclicCreate);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+
+			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, new Relationships.Topic(1));
+
+			assertTrue(provisionalTarget.isPresent());
+			assertEquals(c, provisionalTarget.get().getProperty("name"));
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void provisionalTargetAllRankedUnconnected() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+
+			String acyclicCreate = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					connectRanked(a, b, 1),
+					connectRanked(a, c, 2))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(acyclicCreate);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+
+			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, new Relationships.Topic(1));
+
+			assertFalse(provisionalTarget.isPresent());
+
+			tx.failure();
+		}
+	}
+
 
 	@Test
 	public void testRankedOnlyIsNotConnected() {
@@ -225,5 +322,9 @@ public class ConnectivityUtilsTest {
 
 	private static String connect(String a, String b, String r) {
 		return String.format("(%s)-[:%s]->(%s)", a, r, b);
+	}
+
+	private static String connectRanked(String a, String b, int rank) {
+		return connect(a, b, String.format("RANKED {rank:%d}", rank));
 	}
 }
