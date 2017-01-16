@@ -6,7 +6,7 @@ import org.neo4j.graphdb.Relationship;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -72,4 +72,11 @@ public final class ConnectivityUtils {
 	}
 
 	private ConnectivityUtils() {}
+
+	public static Comparator<Relationship> rankComparator =
+			(left, right) -> getRank(left) < getRank(right) ? -1 : 1;
+
+	private static long getRank(Relationship r) {
+		return (long) r.getProperty("rank");
+	}
 }

@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 import static org.neo4j.function.Predicates.not;
+import static outlikealambda.traversal.ConnectivityUtils.rankComparator;
 import static outlikealambda.traversal.TraversalUtils.goStream;
 
 public class FirstPathDepthFirstTraversal {
@@ -192,13 +193,7 @@ public class FirstPathDepthFirstTraversal {
 			}
 
 			// must both be trusts
-			return getRank(left) < getRank(right) ? -1 : 1;
+			return rankComparator.compare(left, right);
 		};
-
 	}
-
-	private static long getRank(Relationship r) {
-		return (long) r.getProperty("rank");
-	}
-
 }
