@@ -85,6 +85,14 @@ public final class Relationships {
 			return RANKED_TYPE;
 		}
 
+		public Iterable<Relationship> getAllIncoming(Node n) {
+			return getAll(n, Direction.INCOMING);
+		}
+
+		public Iterable<Relationship> getAllOutgoing(Node n) {
+			return getAll(n, Direction.OUTGOING);
+		}
+
 		public Iterable<Relationship> getTargetedIncoming(Node n) {
 			return getTargeted(n, Direction.INCOMING);
 		}
@@ -95,6 +103,10 @@ public final class Relationships {
 
 		private Iterable<Relationship> getTargeted(Node n, Direction d) {
 			return n.getRelationships(d, getManualType(), getProvisionalType());
+		}
+
+		private Iterable<Relationship> getAll(Node n, Direction d) {
+			return n.getRelationships(d, getManualType(), getProvisionalType(), getRankedType());
 		}
 	}
 }

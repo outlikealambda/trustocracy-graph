@@ -23,6 +23,276 @@ public class ConnectivityUtilsTest {
 	public Neo4jRule neo4j = new Neo4jRule();
 
 	@Test
+	public void gainedConnectionShouldFlipChildrenOfManual() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					connectManual(b, a, topic),
+					connectRanked(c, b, 1))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			startNode.getRelationships(Direction.INCOMING)
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+
+			// b should still manually point to a
+			assertEquals(startNode, bNode.getSingleRelationship(topic.getManualType(), Direction.OUTGOING).getEndNode());
+
+			// c should now provisionally point to b
+			assertEquals(bNode, cNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void gainedConnectionShouldNotProvisionRankedIncomingWithOtherManual() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					connectRanked(b, a, 1),
+					connectManual(b, c, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			startNode.getRelationships(Direction.INCOMING)
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+
+			// b should still manually point to c
+			assertEquals(cNode, bNode.getSingleRelationship(topic.getManualType(), Direction.OUTGOING).getEndNode());
+
+			// b should still have a ranked connection to a
+			assertEquals(startNode, bNode.getSingleRelationship(topic.getRankedType(), Direction.OUTGOING).getEndNode());
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void gainedConnectionShouldNotProvisionRankedIncomingWithHigherProvisional() {
+
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					connectRanked(b, a, 2),
+					connectRanked(b, c, 1),
+					connectProvisional(b, c, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			startNode.getRelationships(Direction.INCOMING)
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+
+			// b should still provisionally point to c
+			assertEquals(cNode, bNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
+
+			// incoming to startNode should still be ranked from b
+			assertEquals(bNode, startNode.getSingleRelationship(topic.getRankedType(), Direction.INCOMING).getStartNode());
+
+			assertFalse(startNode.hasRelationship(topic.getProvisionalType()));
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void gainedConnectionShouldProvisionRankedIncomingWithLowerProvisional() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+
+			// a needs to pass the isConnected check, so point it to an opinion
+			// the same for c
+			String opinion = "opinion";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					connectRanked(b, a, 1),
+					connectRanked(b, c, 2),
+					connectProvisional(b, c, topic),
+					connectAuthored(a, opinion, topic),
+					connectAuthored(c, opinion, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			startNode.getRelationships(Direction.INCOMING)
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+
+			// b should now provisionally point to a
+			assertEquals(startNode, bNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
+
+			// incoming to cNode should be ranked from b
+			assertEquals(bNode, cNode.getSingleRelationship(topic.getRankedType(), Direction.INCOMING).getStartNode());
+
+			assertFalse(cNode.hasRelationship(topic.getProvisionalType()));
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void gainedConnectionCreatesCycle() {
+		// edge case, but possible
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+			String d = "d";
+			String e = "e";
+
+			// a needs to pass the isConnected check, so point it to an opinion
+			// the same for c
+			String opinion = "opinion";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			/*
+			 * This is the starting state of the graph.  What kicks it off is
+			 * b switching from manual->e to manual->c.  This causes a-provisional->b,
+			 * which causes c-provisional->a.
+			 *
+			 * This should trigger a cycle and the deletion of all provisional relationships
+			 *
+			 */
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					person(d, 4),
+					person(e, 5),
+					connectRanked(a, b, 1),
+					connectRanked(b, c, 1),
+					connectRanked(c, a, 1),
+					connectRanked(c, d, 2),
+					connectManual(b, e, topic),
+					connectProvisional(c, d, topic),
+					connectAuthored(d, opinion, topic))
+					.collect(Collectors.joining(", "));
+
+			// starting state
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			// delete starting b-manual->e connection
+			bNode.getSingleRelationship(topic.getManualType(), Direction.OUTGOING).delete();
+
+			// create b-manual->c connection
+			bNode.createRelationshipTo(cNode, topic.getManualType());
+
+			// this should trigger the a-flip, then the c-flip, and then... cycle!
+			bNode.getRelationships(Direction.INCOMING)
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+
+			// b should manually point to c
+			assertEquals(cNode, bNode.getSingleRelationship(topic.getManualType(), Direction.OUTGOING).getEndNode());
+
+			// provisionals should be gone from c->a, a->b
+			assertFalse(cNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
+			assertFalse(aNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void gainedConnectionShouldProvisionRankedIncomingWithNoPreviousProvisional() {
+
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+
+			// a needs to pass the isConnected check, so point it to an opinion
+			// the same for c
+			String opinion = "opinion";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					connectRanked(b, a, 2),
+					connectRanked(b, c, 1),
+					connectAuthored(a, opinion, topic),
+					connectAuthored(c, opinion, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			startNode.getRelationships(Direction.INCOMING)
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+
+			// b should now provisionally point to a
+			assertEquals(startNode, bNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
+
+			// incoming to cNode should be ranked from b
+			assertEquals(bNode, cNode.getSingleRelationship(topic.getRankedType(), Direction.INCOMING).getStartNode());
+
+			assertFalse(cNode.hasRelationship(topic.getProvisionalType()));
+
+			tx.failure();
+		}
+	}
+
+	@Test
 	public void rankedOnlyIncomingDoesNothingForLostConnection() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";
@@ -43,6 +313,7 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
+			// only one incoming here
 			startNode.getRelationships(Direction.INCOMING)
 					.forEach(r -> ConnectivityUtils.flipLostConnection(r, topic));
 
@@ -399,20 +670,20 @@ public class ConnectivityUtilsTest {
 	public void testIsConnectedViaAuthored() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";
-			String r = "AUTHORED_1";
 			String opinion = "opinion";
+			Relationships.Topic topic = new Relationships.Topic(1);
 
 			String acyclicCreate = Stream.of(
 					"CREATE" + person(a, 1),
 					opinion(opinion, 2),
-					connect(a, opinion, r))
+					connectAuthored(a, opinion, topic))
 					.collect(Collectors.joining(", "));
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityUtils.isConnected(startNode, new Relationships.Topic(1));
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, topic);
 
 			assertTrue(isConnected);
 
@@ -587,6 +858,10 @@ public class ConnectivityUtilsTest {
 
 	private static String connectProvisional(String a, String b, Relationships.Topic topic) {
 		return connect(a, b, topic.getProvisionalType().name());
+	}
+
+	private static String connectAuthored(String a, String b, Relationships.Topic topic) {
+		return connect(a, b, topic.getAuthoredType().name());
 	}
 
 	private static String connectRanked(String a, String b, int rank) {

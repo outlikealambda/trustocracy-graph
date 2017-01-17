@@ -15,6 +15,49 @@ import java.util.stream.Stream;
 
 public final class ConnectivityUtils {
 
+	public static void flipGainedConnection(Relationship incoming, Relationships.Topic topic) {
+		Node child = incoming.getStartNode();
+
+		if (topic.isManual(incoming)) {
+			topic.getAllIncoming(child)
+					.forEach(r -> flipGainedConnection(r, topic));
+		}
+
+		if (topic.isRanked(incoming)) {
+
+			// child has other manual relationship, so won't flip
+			if (child.hasRelationship(topic.getManualType(), Direction.OUTGOING)) {
+				return;
+			}
+
+			if (child.hasRelationship(topic.getProvisionalType(), Direction.OUTGOING)) {
+				getProvisionalTarget(child, topic)
+						// we only care if the new provisional target is the parent node
+						.filter(incoming.getEndNode()::equals)
+						.ifPresent(newChildTarget -> {
+
+							// delete old provisional relationship
+							child.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING)
+									.delete();
+
+							// create provisional relationship to new target
+							child.createRelationshipTo(newChildTarget, topic.getProvisionalType());
+
+							// check if that creates a cycle
+							cycleCheck(child, topic);
+						});
+
+			} else  {
+				// not possible to create a cycle here
+				child.createRelationshipTo(incoming.getEndNode(), topic.getProvisionalType());
+
+				// no previous target, so this must flip
+				topic.getAllIncoming(child)
+						.forEach(r -> flipGainedConnection(r, topic));
+			}
+		}
+	}
+
 	// traverses through incoming connections
 	public static void flipLostConnection(Relationship incoming, Relationships.Topic topic) {
 
