@@ -1,5 +1,7 @@
 package outlikealambda.traversal;
 
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 
@@ -81,6 +83,18 @@ public final class Relationships {
 
 		public RelationshipType getRankedType() {
 			return RANKED_TYPE;
+		}
+
+		public Iterable<Relationship> getTargetedIncoming(Node n) {
+			return getTargeted(n, Direction.INCOMING);
+		}
+
+		public Iterable<Relationship> getTargetedOutgoing(Node n) {
+			return getTargeted(n, Direction.OUTGOING);
+		}
+
+		private Iterable<Relationship> getTargeted(Node n, Direction d) {
+			return n.getRelationships(d, getManualType(), getProvisionalType());
 		}
 	}
 }
