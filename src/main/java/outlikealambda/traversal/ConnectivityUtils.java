@@ -19,12 +19,11 @@ public final class ConnectivityUtils {
 		Node source = incoming.getStartNode();
 
 		if (topic.isManual(incoming)) {
+			// source's sources could flip, depending on their state
 			topic.getAllIncoming(source)
 					.forEach(r -> flipGainedConnection(r, topic));
-		}
 
-		if (topic.isRanked(incoming)) {
-
+		} else if (topic.isRanked(incoming)) {
 			// source has other manual relationship, so won't flip
 			if (source.hasRelationship(topic.getManualType(), Direction.OUTGOING)) {
 				return;
@@ -48,8 +47,8 @@ public final class ConnectivityUtils {
 							cycleCheck(source, topic);
 						});
 
-			} else  {
-				// not possible to create a cycle here
+			} else {
+				// not possible to create a cycle if node wasn't previously provisioned
 				source.createRelationshipTo(incoming.getEndNode(), topic.getProvisionalType());
 
 				// no previous target, so this must flip
@@ -62,26 +61,16 @@ public final class ConnectivityUtils {
 	// traverses through incoming connections
 	public static void flipLostConnection(Relationship incoming, Relationships.Topic topic) {
 
-		// The source currently points elsewhere, or doesn't point anywhere.
-		// Nothing to do here
-		if (topic.isRanked(incoming)) {
-			return;
-		}
-
 		Node source = incoming.getStartNode();
 
-		// Manual incoming relationship means that sources of that manual source
-		// (grandchildren of this target) may flip (depending on their state),
-		// so continue traversal
 		if (topic.isManual(incoming)) {
+			// Manual incoming relationship means that sources of that manual source
+			// (grandchildren of this target) may flip (depending on their state),
+			// so continue traversal
 			topic.getTargetedIncoming(source)
 					.forEach(r -> flipLostConnection(r, topic));
 
-			return;
-		}
-
-		if (topic.isProvisional(incoming)) {
-
+		} else if (topic.isProvisional(incoming)) {
 			// no longer valid, since parent has no connection
 			incoming.delete();
 
@@ -101,6 +90,9 @@ public final class ConnectivityUtils {
 							.forEach(r -> flipLostConnection(r, topic))
 			);
 		}
+		// case: the incoming relationship is ranked
+		// The source currently points elsewhere, or doesn't point anywhere.
+		// Nothing to do here
 	}
 
 	public static Optional<Node> getProvisionalTarget(Node n, Relationships.Topic topic) {
