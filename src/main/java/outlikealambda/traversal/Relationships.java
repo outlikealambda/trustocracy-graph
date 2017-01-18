@@ -5,6 +5,11 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
 import static outlikealambda.traversal.Relationships.Types.manual;
 import static outlikealambda.traversal.Relationships.Types.ranked;
 
@@ -97,8 +102,18 @@ public final class Relationships {
 			return getTargeted(n, Direction.INCOMING);
 		}
 
-		public Iterable<Relationship> getTargetedOutgoing(Node n) {
-			return getTargeted(n, Direction.OUTGOING);
+		public Optional<Relationship> getTargetedOutgoing(Node n) {
+			List<Relationship> outgoing = new ArrayList<>();
+
+			getTargeted(n, Direction.OUTGOING).forEach(outgoing::add);
+
+			if (outgoing.size() > 1) {
+				throw new IllegalStateException("nodes can only have a single targeted outgoing connection per topic");
+			} else if (outgoing.size() == 1) {
+				return Optional.of(outgoing.get(0));
+			} else {
+				return Optional.empty();
+			}
 		}
 
 		private Iterable<Relationship> getTargeted(Node n, Direction d) {

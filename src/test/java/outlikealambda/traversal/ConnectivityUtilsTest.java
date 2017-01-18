@@ -400,6 +400,52 @@ public class ConnectivityUtilsTest {
 	}
 
 	@Test
+	public void lostConnectionCreatesCycle() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+			String d = "d";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					person(d, 4),
+					connectRanked(a, d, 1),
+					connectRanked(a, b, 2),
+					connectRanked(b, c, 1),
+					connectRanked(c, a, 1),
+					connectProvisional(a, d, topic),
+					connectProvisional(b, c, topic),
+					connectProvisional(c, a, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			// The premise is that d loses connection.
+			// Removing the a-->d relationship should create the a-provisional->b
+			// relationship, because rank.
+			// This creates a cycle c->b->a
+			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			topic.getTargetedOutgoing(aNode).ifPresent(r -> ConnectivityUtils.flipLostConnection(r, topic));
+
+			// the cycle should clear all provisional relationships
+			assertFalse(aNode.hasRelationship(topic.getProvisionalType()));
+			assertFalse(bNode.hasRelationship(topic.getProvisionalType()));
+			assertFalse(cNode.hasRelationship(topic.getProvisionalType()));
+
+			tx.failure();
+		}
+
+	}
+
+	@Test
 	public void nonCycleShouldNotChange() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";

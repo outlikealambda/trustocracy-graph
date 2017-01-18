@@ -11,7 +11,6 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 public final class ConnectivityUtils {
 
@@ -176,9 +175,7 @@ public final class ConnectivityUtils {
 
 	private static Optional<Relationship> getSelected(Node n, Relationships.Topic topic) {
 		return Optional.of(n)
-				.map(topic::getTargetedOutgoing)
-				.map(TraversalUtils::goStream)
-				.flatMap(Stream::findFirst);
+				.flatMap(topic::getTargetedOutgoing);
 	}
 
 	private ConnectivityUtils() {}
