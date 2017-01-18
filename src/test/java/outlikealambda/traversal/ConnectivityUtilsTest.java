@@ -1,6 +1,6 @@
 package outlikealambda.traversal;
 
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
@@ -19,8 +19,8 @@ import static org.junit.Assert.assertTrue;
 
 public class ConnectivityUtilsTest {
 
-	@Rule
-	public Neo4jRule neo4j = new Neo4jRule();
+	@ClassRule
+	public static Neo4jRule neo4j = new Neo4jRule();
 
 	@Test
 	public void gainedConnectionShouldFlipChildrenOfManual() {

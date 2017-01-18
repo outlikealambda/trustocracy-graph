@@ -1,9 +1,8 @@
 package example;
 
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.driver.v1.*;
-import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.harness.junit.Neo4jRule;
 
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -13,8 +12,8 @@ import static org.neo4j.driver.v1.Values.parameters;
 public class LegacyFullTextIndexTest
 {
     // This rule starts a Neo4j instance for us
-    @Rule
-    public Neo4jRule neo4j = new Neo4jRule()
+    @ClassRule
+    public static Neo4jRule neo4j = new Neo4jRule()
 
             // This is the Procedure we want to test
             .withProcedure( FullTextIndex.class );

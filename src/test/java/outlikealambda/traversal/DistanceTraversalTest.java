@@ -1,5 +1,6 @@
 package outlikealambda.traversal;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.driver.v1.Config;
@@ -20,14 +21,21 @@ public class DistanceTraversalTest {
 	public Neo4jRule neo4j = new Neo4jRule()
 			.withProcedure(DistanceTraversal.class);
 
+	private Driver driver;
+
+	@Before
+	public void setup() {
+		driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+		try (Session session = driver.session()) {
+			session.run(getCreateStatement());
+		}
+	}
+
 	@Test
 	public void basicDistanceTraversal() {
 		try (
-				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()
 		) {
-
-			session.run(getCreateStatement());
 
 			StatementResult result = session.run("CALL traverse.distance(0, 0, 4)");
 
@@ -54,11 +62,8 @@ public class DistanceTraversalTest {
 	@Test
 	public void multiplePathsAreGrouped() {
 		try (
-				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()
 		) {
-
-			session.run(getCreateStatement());
 
 			session.run("MATCH (c:Person{id:2}), (d:Person{id:3}) CREATE (c)-[:TRUSTS_EXPLICITLY]->(d)");
 
@@ -79,11 +84,8 @@ public class DistanceTraversalTest {
 	@Test
 	public void withUnconnectedReturnsAllOpinions() {
 		try (
-				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()
 		) {
-
-			session.run(getCreateStatement());
 
 			session.run("MATCH (c:Person{id:2}), (d:Person{id:3}) CREATE (c)-[:TRUSTS_EXPLICITLY]->(d)");
 
@@ -100,11 +102,8 @@ public class DistanceTraversalTest {
 	@Test
 	public void delegatesRelationshipWithWrongTopicIdIsNotFollowed() {
 		try (
-				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()
 		) {
-
-			session.run(getCreateStatement());
 
 			session.run("MATCH (a:Person{id:0}), (g:Person{id:6}) CREATE (a)-[:DELEGATES{topicId:1}]->(g)");
 
@@ -121,11 +120,8 @@ public class DistanceTraversalTest {
 	@Test
 	public void delegatesRelationshipWithCorrectTopicIdIsFollowed() {
 		try (
-				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()
 		) {
-
-			session.run(getCreateStatement());
 
 			session.run("MATCH (a:Person{id:0}), (g:Person{id:6}) CREATE (a)-[:DELEGATES{topicId:0}]->(g)");
 
@@ -144,11 +140,8 @@ public class DistanceTraversalTest {
 	@Test
 	public void testInfluence() {
 		try (
-				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()
 		) {
-
-			session.run(getCreateStatement());
 
 			StatementResult result;
 
@@ -169,11 +162,8 @@ public class DistanceTraversalTest {
 	@Test
 	public void testInfluenceCountsDelegateRelationshipsAsZero() {
 		try (
-				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()
 		) {
-
-			session.run(getCreateStatement());
 
 			session.run("MATCH (a:Person{id:0}), (g:Person{id:6}) CREATE (a)-[:DELEGATES{topicId:0}]->(g)");
 
@@ -186,11 +176,8 @@ public class DistanceTraversalTest {
 	@Test
 	public void testInfluenceFromOpinionId() {
 		try (
-				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()
 		) {
-
-			session.run(getCreateStatement());
 
 			session.run("MATCH (b:Person{id:0}), (g:Person{id:6}) CREATE (a)-[:DELEGATES{topicId:0}]->(g)");
 
@@ -220,7 +207,7 @@ public class DistanceTraversalTest {
 	 *       og ----
 	 *
 	 */
-	private String getCreateStatement() {
+	private static String getCreateStatement() {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("CREATE (a:Person {name:'A', id:0})")
