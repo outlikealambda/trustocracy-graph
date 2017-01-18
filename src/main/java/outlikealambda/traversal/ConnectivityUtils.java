@@ -16,43 +16,44 @@ import java.util.stream.Stream;
 public final class ConnectivityUtils {
 
 	public static void flipGainedConnection(Relationship incoming, Relationships.Topic topic) {
-		Node child = incoming.getStartNode();
+		Node source = incoming.getStartNode();
 
 		if (topic.isManual(incoming)) {
-			topic.getAllIncoming(child)
+			topic.getAllIncoming(source)
 					.forEach(r -> flipGainedConnection(r, topic));
 		}
 
 		if (topic.isRanked(incoming)) {
 
-			// child has other manual relationship, so won't flip
-			if (child.hasRelationship(topic.getManualType(), Direction.OUTGOING)) {
+			// source has other manual relationship, so won't flip
+			if (source.hasRelationship(topic.getManualType(), Direction.OUTGOING)) {
 				return;
 			}
 
-			if (child.hasRelationship(topic.getProvisionalType(), Direction.OUTGOING)) {
-				getProvisionalTarget(child, topic)
-						// we only care if the new provisional target is the parent node
+			if (source.hasRelationship(topic.getProvisionalType(), Direction.OUTGOING)) {
+				getProvisionalTarget(source, topic)
+						// We only care if the new provisional target is now the same
+						// as the ranked incoming relationship
 						.filter(incoming.getEndNode()::equals)
-						.ifPresent(newChildTarget -> {
+						.ifPresent(newSourceTarget -> {
 
 							// delete old provisional relationship
-							child.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING)
+							source.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING)
 									.delete();
 
 							// create provisional relationship to new target
-							child.createRelationshipTo(newChildTarget, topic.getProvisionalType());
+							source.createRelationshipTo(newSourceTarget, topic.getProvisionalType());
 
 							// check if that creates a cycle
-							cycleCheck(child, topic);
+							cycleCheck(source, topic);
 						});
 
 			} else  {
 				// not possible to create a cycle here
-				child.createRelationshipTo(incoming.getEndNode(), topic.getProvisionalType());
+				source.createRelationshipTo(incoming.getEndNode(), topic.getProvisionalType());
 
 				// no previous target, so this must flip
-				topic.getAllIncoming(child)
+				topic.getAllIncoming(source)
 						.forEach(r -> flipGainedConnection(r, topic));
 			}
 		}
@@ -61,17 +62,19 @@ public final class ConnectivityUtils {
 	// traverses through incoming connections
 	public static void flipLostConnection(Relationship incoming, Relationships.Topic topic) {
 
-		// no work here -- will not flip child nodes currently pointing elsewhere
+		// The source currently points elsewhere, or doesn't point anywhere.
+		// Nothing to do here
 		if (topic.isRanked(incoming)) {
 			return;
 		}
 
-		Node child = incoming.getStartNode();
+		Node source = incoming.getStartNode();
 
-		// manual incoming relationship means that children of that manual node
-		// may flip (depending on their state), so continue traversal
+		// Manual incoming relationship means that sources of that manual source
+		// (grandchildren of this target) may flip (depending on their state),
+		// so continue traversal
 		if (topic.isManual(incoming)) {
-			topic.getTargetedIncoming(child)
+			topic.getTargetedIncoming(source)
 					.forEach(r -> flipLostConnection(r, topic));
 
 			return;
@@ -83,18 +86,18 @@ public final class ConnectivityUtils {
 			incoming.delete();
 
 			Optionals.ifElse(
-					getProvisionalTarget(child, topic),
+					getProvisionalTarget(source, topic),
 
 					// Has a new target, so create that relationship,
 					// but also check if new target creates a cycle
 					newTarget -> {
-						child.createRelationshipTo(newTarget, topic.getProvisionalType());
-						cycleCheck(child, topic);
+						source.createRelationshipTo(newTarget, topic.getProvisionalType());
+						cycleCheck(source, topic);
 					},
 
 					// No new target (which means this node has also flipped),
-					// so flip all incoming of the child node
-					() -> topic.getTargetedIncoming(child)
+					// so flip all incoming of the source node
+					() -> topic.getTargetedIncoming(source)
 							.forEach(r -> flipLostConnection(r, topic))
 			);
 		}
@@ -104,7 +107,7 @@ public final class ConnectivityUtils {
 		return TraversalUtils.goStream(n.getRelationships(Direction.OUTGOING, topic.getRankedType()))
 				.sorted(rankComparator)
 				.map(Relationship::getEndNode)
-				.filter(parent -> isConnected(parent, topic))
+				.filter(target -> isConnected(target, topic))
 				.findFirst();
 	}
 
@@ -119,7 +122,7 @@ public final class ConnectivityUtils {
 		return Optional.of(n)
 				.map(current -> current.getSingleRelationship(topic.getManualType(), Direction.OUTGOING))
 				.map(Relationship::getEndNode)
-				.map(parent -> isConnected(parent, topic))
+				.map(target -> isConnected(target, topic))
 				.orElse(false);
 	}
 
