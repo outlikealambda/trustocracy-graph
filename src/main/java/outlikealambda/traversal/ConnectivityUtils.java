@@ -13,6 +13,53 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class ConnectivityUtils {
+	public static void clearTarget(Node source, Relationships.Topic topic) {
+		changeTarget(source, null, topic);
+	}
+
+	public static void setTarget(Node source, Node target, Relationships.Topic topic) {
+		changeTarget(source, target, topic);
+	}
+
+	private static void changeTarget(Node source, Node t, Relationships.Topic topic) {
+		boolean wasConnected = isConnected(source, topic);
+
+		// Delete the existing outgoing relationship if it exists
+		// Could be either manual or provisioned
+		topic.getTargetedOutgoing(source)
+				.ifPresent(Relationship::delete);
+
+		// create a new relationship to:
+		// 1. manually specified node
+		// 2. provisioned node
+		// 3. nowhere
+		Optionals.ifElse(
+				Optional.ofNullable(t),
+
+				// create manual if parameter exists
+				target -> source.createRelationshipTo(target, topic.getManualType()),
+
+				// try to create a provisional relationship
+				() -> getProvisionalTarget(source, topic)
+						.ifPresent(target -> source.createRelationshipTo(target, topic.getProvisionalType()))
+		);
+
+		if (clearIfCycle(source, topic)) {
+			// cycle here, so clear and bail
+			return;
+		}
+
+		// flip if necessary
+		boolean isConnected = isConnected(source, topic);
+
+		if (wasConnected && !isConnected) {
+			topic.getAllIncoming(source).forEach(r -> flipLostConnection(r, topic));
+		}
+
+		if (!wasConnected && isConnected) {
+			topic.getAllIncoming(source).forEach(r -> flipGainedConnection(r, topic));
+		}
+	}
 
 	public static void flipGainedConnection(Relationship incoming, Relationships.Topic topic) {
 		Node source = incoming.getStartNode();
@@ -43,7 +90,7 @@ public final class ConnectivityUtils {
 							source.createRelationshipTo(newSourceTarget, topic.getProvisionalType());
 
 							// check if that creates a cycle
-							cycleCheck(source, topic);
+							clearIfCycle(source, topic);
 						});
 
 			} else {
@@ -80,7 +127,7 @@ public final class ConnectivityUtils {
 					// but also check if new target creates a cycle
 					newTarget -> {
 						source.createRelationshipTo(newTarget, topic.getProvisionalType());
-						cycleCheck(source, topic);
+						clearIfCycle(source, topic);
 					},
 
 					// No new target (which means this node has also flipped),
@@ -117,30 +164,19 @@ public final class ConnectivityUtils {
 				.orElse(false);
 	}
 
-	public static void cycleCheck(Node start, Relationships.Topic topic) {
+	public static boolean clearIfCycle(Node start, Relationships.Topic topic) {
 		Collection<Node> cycle = getCycle(start, topic);
 
 		// great
 		if (cycle.isEmpty()) {
-			return;
+			return false;
 		}
 
-		// Delete all provisional relationships in this cycle,
-		// because a cycle has no endpoint...
-		cycle.stream()
-				.map(cycleNode -> cycleNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING))
-				.filter(Objects::nonNull)
-				.forEach(Relationship::delete);
+		clearCyclicProvisions(cycle, topic);
 
-		// Since we've created a cycle, we have lost an endpoint, and
-		// so we have to flip any incoming connections which previously
-		// routed to that endpoint
-		cycle.stream()
-				.map(topic::getTargetedIncoming)
-				.flatMap(TraversalUtils::goStream)
-				// skip any remaining manual relationships between the nodes in the cycle
-				.filter(r -> !cycle.contains(r.getStartNode()))
-				.forEach(incoming -> flipLostConnection(incoming, topic));
+		flipCyclicIncoming(cycle, topic);
+
+		return true;
 	}
 
 	// empty collection if no cycle
@@ -171,6 +207,28 @@ public final class ConnectivityUtils {
 				return Collections.emptyList();
 			}
 		}
+	}
+
+	// Delete all provisional relationships in this cycle,
+	// because a cycle has no endpoint...
+	private static void clearCyclicProvisions(Collection<Node> cycle, Relationships.Topic topic) {
+		cycle.stream()
+				.map(cycleNode -> cycleNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING))
+				.filter(Objects::nonNull)
+				.forEach(Relationship::delete);
+	}
+
+	// If we've created a cycle, we may have lost an endpoint, and
+	// so we have to flip any incoming connections which previously
+	// routed to that endpoint
+	private static void flipCyclicIncoming(Collection<Node> cycle, Relationships.Topic topic) {
+		cycle.stream()
+				.map(topic::getTargetedIncoming)
+				.flatMap(TraversalUtils::goStream)
+				// skip any remaining manual relationships between the nodes in the cycle
+				.filter(r -> !cycle.contains(r.getStartNode()))
+				.forEach(incoming -> flipLostConnection(incoming, topic));
+
 	}
 
 	private static Optional<Relationship> getSelected(Node n, Relationships.Topic topic) {

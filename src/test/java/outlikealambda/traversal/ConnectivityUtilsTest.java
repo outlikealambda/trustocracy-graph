@@ -23,6 +23,207 @@ public class ConnectivityUtilsTest {
 	public static Neo4jRule neo4j = new Neo4jRule();
 
 	@Test
+	public void targetIsUnconnectedRemovesProvisionals() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+			String d = "d";
+			String o = "opinion";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					person(d, 4),
+					opinion(o, 1),
+					connectRanked(a, b, 1),
+					connectRanked(b, d, 1),
+					connectAuthored(d, o, topic),
+					connectProvisional(a, b, topic),
+					connectProvisional(b, d, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			// creating b-MANUAL->c should delete b-PROVISIONAL->c and a-PROVISIONAL->b
+			ConnectivityUtils.setTarget(bNode, cNode, topic);
+
+			// the cycle should cause all provisional relationships to clear
+			assertFalse(topic.getTargetedOutgoing(aNode).isPresent());
+			assertFalse(bNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
+			assertTrue(bNode.hasRelationship(Direction.OUTGOING, topic.getManualType()));
+			assertTrue(cNode.hasRelationship(Direction.INCOMING, topic.getManualType()));
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void targetSelectionCreatesCycle() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+			String d = "d";
+			String o = "opinion";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					person(d, 4),
+					opinion(o, 1),
+					connectRanked(a, b, 1),
+					connectRanked(b, c, 1),
+					connectRanked(c, a, 1),
+					connectManual(a, c, topic),
+					connectAuthored(d, o, topic),
+					connectProvisional(b, c, topic),
+					connectProvisional(c, a, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+			Node dNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 4);
+
+			// deleting a-MANUAL->d should connect a-PROVISIONAL->b and create a cycle
+			ConnectivityUtils.clearTarget(aNode, topic);
+
+			// the cycle should cause all provisional relationships to clear
+			assertFalse(topic.getTargetedOutgoing(aNode).isPresent());
+			assertFalse(topic.getTargetedOutgoing(bNode).isPresent());
+			assertFalse(topic.getTargetedOutgoing(cNode).isPresent());
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void removeManualConnectedTargetToGetProvisional() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+			String d = "d";
+			String o = "opinion";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					person(d, 4),
+					opinion(o, 1),
+					connectRanked(a, c, 1),
+					connectRanked(d, a, 1),
+					connectManual(a, b, topic),
+					connectAuthored(c, o, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+			Node dNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 4);
+
+			// deleting a-MANUAL->b should connect a-PROVISIONAL->c and d-PROVISIONAL->a
+			ConnectivityUtils.clearTarget(aNode, topic);
+
+			// b should still manually point to a
+			assertEquals(cNode, topic.getTargetedOutgoing(aNode).get().getEndNode());
+			assertEquals(aNode, topic.getTargetedOutgoing(dNode).get().getEndNode());
+			assertTrue(aNode.hasRelationship(topic.getProvisionalType(), Direction.OUTGOING));
+			assertTrue(cNode.hasRelationship(topic.getProvisionalType(), Direction.INCOMING));
+			assertTrue(dNode.hasRelationship(topic.getProvisionalType(), Direction.OUTGOING));
+			assertTrue(aNode.hasRelationship(topic.getProvisionalType(), Direction.INCOMING));
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void addManualTarget() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+			String o = "opinion";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					opinion(o, 1),
+					connectRanked(a, b, 1),
+					connectAuthored(c, o, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			// connecting b-MANUAL->c should connect a-PROVISIONAL->b
+			ConnectivityUtils.setTarget(bNode, cNode, topic);
+
+			// b should still manually point to a
+			assertEquals(cNode, topic.getTargetedOutgoing(bNode).get().getEndNode());
+			assertTrue(aNode.hasRelationship(topic.getProvisionalType(), Direction.OUTGOING));
+			assertTrue(bNode.hasRelationship(topic.getProvisionalType(), Direction.INCOMING));
+
+			tx.failure();
+		}
+
+	}
+
+	@Test
+	public void switchManualTargets() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					connectManual(a, b, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+
+			ConnectivityUtils.setTarget(aNode, cNode, topic);
+
+			// b should still manually point to a
+			assertEquals(cNode, topic.getTargetedOutgoing(aNode).get().getEndNode());
+
+			tx.failure();
+		}
+	}
+
+	@Test
 	public void gainedConnectionShouldFlipChildrenOfManual() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";
@@ -96,7 +297,6 @@ public class ConnectivityUtilsTest {
 
 	@Test
 	public void gainedConnectionShouldNotProvisionRankedIncomingWithHigherProvisional() {
-
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";
 			String b = "b";
@@ -189,8 +389,7 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String e = "e";
 
-			// a needs to pass the isConnected check, so point it to an opinion
-			// the same for c
+			// c needs to pass the isConnected check, so point it to an opinion
 			String opinion = "opinion";
 
 			Relationships.Topic topic = new Relationships.Topic(1);
@@ -203,7 +402,6 @@ public class ConnectivityUtilsTest {
 			 * This should trigger a cycle and the deletion of all provisional relationships
 			 *
 			 */
-
 			String create = Stream.of(
 					"CREATE" + person(a, 1),
 					person(b, 2),
@@ -249,7 +447,6 @@ public class ConnectivityUtilsTest {
 
 	@Test
 	public void gainedConnectionShouldProvisionRankedIncomingWithNoPreviousProvisional() {
-
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";
 			String b = "b";
@@ -468,7 +665,7 @@ public class ConnectivityUtilsTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityUtils.cycleCheck(startNode, topic);
+			ConnectivityUtils.clearIfCycle(startNode, topic);
 
 			// incoming provisional connections should disappear
 			assertEquals(bNode, startNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
@@ -503,7 +700,7 @@ public class ConnectivityUtilsTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityUtils.cycleCheck(startNode, topic);
+			ConnectivityUtils.clearIfCycle(startNode, topic);
 
 			// incoming provisional connections should disappear
 			assertFalse(startNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
@@ -544,7 +741,7 @@ public class ConnectivityUtilsTest {
 
 			assertTrue(nonCycleNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
 
-			ConnectivityUtils.cycleCheck(startNode, topic);
+			ConnectivityUtils.clearIfCycle(startNode, topic);
 
 			// incoming provisional connections should disappear
 			assertFalse(startNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
@@ -580,7 +777,7 @@ public class ConnectivityUtilsTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityUtils.cycleCheck(startNode, topic);
+			ConnectivityUtils.clearIfCycle(startNode, topic);
 
 			// incoming provisional connections should disappear
 			assertTrue(startNode.hasRelationship(Direction.OUTGOING, topic.getManualType()));
