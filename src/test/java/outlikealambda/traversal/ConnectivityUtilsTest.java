@@ -23,6 +23,98 @@ public class ConnectivityUtilsTest {
 	public static Neo4jRule neo4j = new Neo4jRule();
 
 	@Test
+	public void getDesignatedAuthor() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+			String d = "d";
+			String z = "z";
+			String opinion = "opinion";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					person(d, 4),
+					person(z, 5),
+					opinion(opinion, 1),
+					connectRanked(a, b, 1),
+					connectRanked(b, d, 1),
+					connectRanked(z, a, 1),
+					connectProvisional(a, c, topic),
+					connectProvisional(b, c, topic),
+					connectProvisional(c, d, topic),
+					connectAuthored(d, opinion, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+			Node dNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 4);
+			Node zNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 5);
+
+			// should not count z-RANKED->a as influence
+			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(aNode, topic).get());
+			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(bNode, topic).get());
+			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(cNode, topic).get());
+			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(dNode, topic).get());
+			assertFalse(ConnectivityUtils.getDesignatedAuthor(zNode, topic).isPresent());
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void calculateInfluence() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String a = "a";
+			String b = "b";
+			String c = "c";
+			String d = "d";
+			String z = "z";
+
+			Relationships.Topic topic = new Relationships.Topic(1);
+
+			String create = Stream.of(
+					"CREATE" + person(a, 1),
+					person(b, 2),
+					person(c, 3),
+					person(d, 4),
+					person(z, 5),
+					connectRanked(a, b, 1),
+					connectRanked(b, d, 1),
+					connectRanked(z, a, 1),
+					connectProvisional(a, c, topic),
+					connectProvisional(b, c, topic),
+					connectProvisional(c, d, topic))
+					.collect(Collectors.joining(", "));
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
+			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
+			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
+			Node dNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 4);
+			Node zNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 5);
+
+			// should not count z-RANKED->a as influence
+			assertEquals(1, ConnectivityUtils.calculateInfluence(aNode, topic));
+			assertEquals(1, ConnectivityUtils.calculateInfluence(bNode, topic));
+			assertEquals(3, ConnectivityUtils.calculateInfluence(cNode, topic));
+			assertEquals(4, ConnectivityUtils.calculateInfluence(dNode, topic));
+			assertEquals(1, ConnectivityUtils.calculateInfluence(zNode, topic));
+
+			tx.failure();
+		}
+	}
+
+
+	@Test
 	public void targetIsUnconnectedRemovesProvisionals() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";

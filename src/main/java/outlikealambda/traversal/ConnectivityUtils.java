@@ -13,6 +13,34 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class ConnectivityUtils {
+	public static Optional<Node> getDesignatedAuthor(Node source, Relationships.Topic topic) {
+		Node current = source;
+
+		while(true) {
+			if (current.hasRelationship(topic.getAuthoredType(), Direction.OUTGOING)) {
+				// found a connected opinion
+				return Optional.of(current);
+			}
+
+			Optional<Relationship> outgoing = topic.getTargetedOutgoing(current);
+
+			if (!outgoing.isPresent()) {
+				// end of path, with no opinion
+				return Optional.empty();
+			}
+
+			// continue down the path
+			current = outgoing.get().getEndNode();
+		}
+	}
+
+	public static int calculateInfluence(Node target, Relationships.Topic topic) {
+		return TraversalUtils.goStream(topic.getTargetedIncoming(target))
+				.map(Relationship::getStartNode)
+				.map(source -> calculateInfluence(source, topic))
+				.reduce(1, (total, perSourceTotal) -> total + perSourceTotal);
+	}
+
 	public static void clearTarget(Node source, Relationships.Topic topic) {
 		changeTarget(source, null, topic);
 	}
