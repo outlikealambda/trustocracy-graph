@@ -20,6 +20,8 @@ public class ConnectivityUtilsTest {
 	@ClassRule
 	public static Neo4jRule neo4j = new Neo4jRule();
 
+	private static RelationshipFilter rf = new RelationshipFilter(1);
+
 	@Test
 	public void getDesignatedAuthor() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
@@ -29,8 +31,6 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String z = "z";
 			String opinion = "opinion";
-
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -42,10 +42,10 @@ public class ConnectivityUtilsTest {
 					.connectRanked(a, b, 1)
 					.connectRanked(b, d, 1)
 					.connectRanked(z, a, 1)
-					.connectProvisional(a, c, topic)
-					.connectProvisional(b, c, topic)
-					.connectProvisional(c, d, topic)
-					.connectAuthored(d, opinion, topic)
+					.connectProvisional(a, c, rf)
+					.connectProvisional(b, c, rf)
+					.connectProvisional(c, d, rf)
+					.connectAuthored(d, opinion, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -57,11 +57,11 @@ public class ConnectivityUtilsTest {
 			Node zNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 5);
 
 			// should not count z-RANKED->a as influence
-			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(aNode, topic).get());
-			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(bNode, topic).get());
-			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(cNode, topic).get());
-			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(dNode, topic).get());
-			assertFalse(ConnectivityUtils.getDesignatedAuthor(zNode, topic).isPresent());
+			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(aNode, rf).get());
+			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(bNode, rf).get());
+			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(cNode, rf).get());
+			assertEquals(dNode, ConnectivityUtils.getDesignatedAuthor(dNode, rf).get());
+			assertFalse(ConnectivityUtils.getDesignatedAuthor(zNode, rf).isPresent());
 
 			tx.failure();
 		}
@@ -76,8 +76,6 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String z = "z";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
@@ -87,9 +85,9 @@ public class ConnectivityUtilsTest {
 					.connectRanked(a, b, 1)
 					.connectRanked(b, d, 1)
 					.connectRanked(z, a, 1)
-					.connectProvisional(a, c, topic)
-					.connectProvisional(b, c, topic)
-					.connectProvisional(c, d, topic)
+					.connectProvisional(a, c, rf)
+					.connectProvisional(b, c, rf)
+					.connectProvisional(c, d, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -101,11 +99,11 @@ public class ConnectivityUtilsTest {
 			Node zNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 5);
 
 			// should not count z-RANKED->a as influence
-			assertEquals(1, ConnectivityUtils.calculateInfluence(aNode, topic));
-			assertEquals(1, ConnectivityUtils.calculateInfluence(bNode, topic));
-			assertEquals(3, ConnectivityUtils.calculateInfluence(cNode, topic));
-			assertEquals(4, ConnectivityUtils.calculateInfluence(dNode, topic));
-			assertEquals(1, ConnectivityUtils.calculateInfluence(zNode, topic));
+			assertEquals(1, ConnectivityUtils.calculateInfluence(aNode, rf));
+			assertEquals(1, ConnectivityUtils.calculateInfluence(bNode, rf));
+			assertEquals(3, ConnectivityUtils.calculateInfluence(cNode, rf));
+			assertEquals(4, ConnectivityUtils.calculateInfluence(dNode, rf));
+			assertEquals(1, ConnectivityUtils.calculateInfluence(zNode, rf));
 
 			tx.failure();
 		}
@@ -121,8 +119,6 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String o = "opinion";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
@@ -131,9 +127,9 @@ public class ConnectivityUtilsTest {
 					.addOpinion(o, 1)
 					.connectRanked(a, b, 1)
 					.connectRanked(b, d, 1)
-					.connectAuthored(d, o, topic)
-					.connectProvisional(a, b, topic)
-					.connectProvisional(b, d, topic)
+					.connectAuthored(d, o, rf)
+					.connectProvisional(a, b, rf)
+					.connectProvisional(b, d, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -143,13 +139,13 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			// creating b-MANUAL->c should delete b-PROVISIONAL->c and a-PROVISIONAL->b
-			ConnectivityUtils.setTarget(bNode, cNode, topic);
+			ConnectivityUtils.setTarget(bNode, cNode, rf);
 
 			// the cycle should cause all provisional relationships to clear
-			assertFalse(topic.getTargetedOutgoing(aNode).isPresent());
-			assertFalse(bNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
-			assertTrue(bNode.hasRelationship(Direction.OUTGOING, topic.getManualType()));
-			assertTrue(cNode.hasRelationship(Direction.INCOMING, topic.getManualType()));
+			assertFalse(rf.getTargetedOutgoing(aNode).isPresent());
+			assertFalse(bNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
+			assertTrue(bNode.hasRelationship(Direction.OUTGOING, rf.getManualType()));
+			assertTrue(cNode.hasRelationship(Direction.INCOMING, rf.getManualType()));
 
 			tx.failure();
 		}
@@ -164,8 +160,6 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String o = "opinion";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
@@ -175,10 +169,10 @@ public class ConnectivityUtilsTest {
 					.connectRanked(a, b, 1)
 					.connectRanked(b, c, 1)
 					.connectRanked(c, a, 1)
-					.connectManual(a, c, topic)
-					.connectAuthored(d, o, topic)
-					.connectProvisional(b, c, topic)
-					.connectProvisional(c, a, topic)
+					.connectManual(a, c, rf)
+					.connectAuthored(d, o, rf)
+					.connectProvisional(b, c, rf)
+					.connectProvisional(c, a, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -189,12 +183,12 @@ public class ConnectivityUtilsTest {
 			Node dNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 4);
 
 			// deleting a-MANUAL->d should connect a-PROVISIONAL->b and create a cycle
-			ConnectivityUtils.clearTarget(aNode, topic);
+			ConnectivityUtils.clearTarget(aNode, rf);
 
 			// the cycle should cause all provisional relationships to clear
-			assertFalse(topic.getTargetedOutgoing(aNode).isPresent());
-			assertFalse(topic.getTargetedOutgoing(bNode).isPresent());
-			assertFalse(topic.getTargetedOutgoing(cNode).isPresent());
+			assertFalse(rf.getTargetedOutgoing(aNode).isPresent());
+			assertFalse(rf.getTargetedOutgoing(bNode).isPresent());
+			assertFalse(rf.getTargetedOutgoing(cNode).isPresent());
 
 			tx.failure();
 		}
@@ -209,8 +203,6 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String o = "opinion";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
@@ -219,8 +211,8 @@ public class ConnectivityUtilsTest {
 					.addOpinion(o, 1)
 					.connectRanked(a, c, 1)
 					.connectRanked(d, a, 1)
-					.connectManual(a, b, topic)
-					.connectAuthored(c, o, topic)
+					.connectManual(a, b, rf)
+					.connectAuthored(c, o, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -231,15 +223,15 @@ public class ConnectivityUtilsTest {
 			Node dNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 4);
 
 			// deleting a-MANUAL->b should connect a-PROVISIONAL->c and d-PROVISIONAL->a
-			ConnectivityUtils.clearTarget(aNode, topic);
+			ConnectivityUtils.clearTarget(aNode, rf);
 
 			// b should still manually point to a
-			assertEquals(cNode, topic.getTargetedOutgoing(aNode).get().getEndNode());
-			assertEquals(aNode, topic.getTargetedOutgoing(dNode).get().getEndNode());
-			assertTrue(aNode.hasRelationship(topic.getProvisionalType(), Direction.OUTGOING));
-			assertTrue(cNode.hasRelationship(topic.getProvisionalType(), Direction.INCOMING));
-			assertTrue(dNode.hasRelationship(topic.getProvisionalType(), Direction.OUTGOING));
-			assertTrue(aNode.hasRelationship(topic.getProvisionalType(), Direction.INCOMING));
+			assertEquals(cNode, rf.getTargetedOutgoing(aNode).get().getEndNode());
+			assertEquals(aNode, rf.getTargetedOutgoing(dNode).get().getEndNode());
+			assertTrue(aNode.hasRelationship(rf.getProvisionalType(), Direction.OUTGOING));
+			assertTrue(cNode.hasRelationship(rf.getProvisionalType(), Direction.INCOMING));
+			assertTrue(dNode.hasRelationship(rf.getProvisionalType(), Direction.OUTGOING));
+			assertTrue(aNode.hasRelationship(rf.getProvisionalType(), Direction.INCOMING));
 
 			tx.failure();
 		}
@@ -253,15 +245,13 @@ public class ConnectivityUtilsTest {
 			String c = "c";
 			String o = "opinion";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.addOpinion(o, 1)
 					.connectRanked(a, b, 1)
-					.connectAuthored(c, o, topic)
+					.connectAuthored(c, o, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -271,12 +261,12 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			// connecting b-MANUAL->c should connect a-PROVISIONAL->b
-			ConnectivityUtils.setTarget(bNode, cNode, topic);
+			ConnectivityUtils.setTarget(bNode, cNode, rf);
 
 			// b should still manually point to a
-			assertEquals(cNode, topic.getTargetedOutgoing(bNode).get().getEndNode());
-			assertTrue(aNode.hasRelationship(topic.getProvisionalType(), Direction.OUTGOING));
-			assertTrue(bNode.hasRelationship(topic.getProvisionalType(), Direction.INCOMING));
+			assertEquals(cNode, rf.getTargetedOutgoing(bNode).get().getEndNode());
+			assertTrue(aNode.hasRelationship(rf.getProvisionalType(), Direction.OUTGOING));
+			assertTrue(bNode.hasRelationship(rf.getProvisionalType(), Direction.INCOMING));
 
 			tx.failure();
 		}
@@ -290,13 +280,11 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
-					.connectManual(a, b, topic)
+					.connectManual(a, b, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -304,10 +292,10 @@ public class ConnectivityUtilsTest {
 			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityUtils.setTarget(aNode, cNode, topic);
+			ConnectivityUtils.setTarget(aNode, cNode, rf);
 
 			// b should still manually point to a
-			assertEquals(cNode, topic.getTargetedOutgoing(aNode).get().getEndNode());
+			assertEquals(cNode, rf.getTargetedOutgoing(aNode).get().getEndNode());
 
 			tx.failure();
 		}
@@ -320,13 +308,11 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
-					.connectManual(b, a, topic)
+					.connectManual(b, a, rf)
 					.connectRanked(c, b, 1)
 					.build();
 
@@ -337,13 +323,13 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, rf));
 
 			// b should still manually point to a
-			assertEquals(startNode, bNode.getSingleRelationship(topic.getManualType(), Direction.OUTGOING).getEndNode());
+			assertEquals(startNode, bNode.getSingleRelationship(rf.getManualType(), Direction.OUTGOING).getEndNode());
 
 			// c should now provisionally point to b
-			assertEquals(bNode, cNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
+			assertEquals(bNode, cNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
 
 			tx.failure();
 		}
@@ -356,14 +342,12 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.connectRanked(b, a, 1)
-					.connectManual(b, c, topic)
+					.connectManual(b, c, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -373,13 +357,13 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, rf));
 
 			// b should still manually point to c
-			assertEquals(cNode, bNode.getSingleRelationship(topic.getManualType(), Direction.OUTGOING).getEndNode());
+			assertEquals(cNode, bNode.getSingleRelationship(rf.getManualType(), Direction.OUTGOING).getEndNode());
 
 			// b should still have a ranked connection to a
-			assertEquals(startNode, bNode.getSingleRelationship(topic.getRankedType(), Direction.OUTGOING).getEndNode());
+			assertEquals(startNode, bNode.getSingleRelationship(rf.getRankedType(), Direction.OUTGOING).getEndNode());
 
 			tx.failure();
 		}
@@ -392,15 +376,13 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.connectRanked(b, a, 2)
 					.connectRanked(b, c, 1)
-					.connectProvisional(b, c, topic)
+					.connectProvisional(b, c, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -410,15 +392,15 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, rf));
 
 			// b should still provisionally point to c
-			assertEquals(cNode, bNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
+			assertEquals(cNode, bNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
 
 			// incoming to startNode should still be ranked from b
-			assertEquals(bNode, startNode.getSingleRelationship(topic.getRankedType(), Direction.INCOMING).getStartNode());
+			assertEquals(bNode, startNode.getSingleRelationship(rf.getRankedType(), Direction.INCOMING).getStartNode());
 
-			assertFalse(startNode.hasRelationship(topic.getProvisionalType()));
+			assertFalse(startNode.hasRelationship(rf.getProvisionalType()));
 
 			tx.failure();
 		}
@@ -435,17 +417,15 @@ public class ConnectivityUtilsTest {
 			// the same for c
 			String opinion = "opinion";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.connectRanked(b, a, 1)
 					.connectRanked(b, c, 2)
-					.connectProvisional(b, c, topic)
-					.connectAuthored(a, opinion, topic)
-					.connectAuthored(c, opinion, topic)
+					.connectProvisional(b, c, rf)
+					.connectAuthored(a, opinion, rf)
+					.connectAuthored(c, opinion, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -455,15 +435,15 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, rf));
 
 			// b should now provisionally point to a
-			assertEquals(startNode, bNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
+			assertEquals(startNode, bNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
 
 			// incoming to cNode should be ranked from b
-			assertEquals(bNode, cNode.getSingleRelationship(topic.getRankedType(), Direction.INCOMING).getStartNode());
+			assertEquals(bNode, cNode.getSingleRelationship(rf.getRankedType(), Direction.INCOMING).getStartNode());
 
-			assertFalse(cNode.hasRelationship(topic.getProvisionalType()));
+			assertFalse(cNode.hasRelationship(rf.getProvisionalType()));
 
 			tx.failure();
 		}
@@ -481,8 +461,6 @@ public class ConnectivityUtilsTest {
 
 			// c needs to pass the isConnected check, so point it to an opinion
 			String opinion = "opinion";
-
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			/*
 			 * This is the starting state of the graph.  What kicks it off is
@@ -502,9 +480,9 @@ public class ConnectivityUtilsTest {
 					.connectRanked(b, c, 1)
 					.connectRanked(c, a, 1)
 					.connectRanked(c, d, 2)
-					.connectManual(b, e, topic)
-					.connectProvisional(c, d, topic)
-					.connectAuthored(d, opinion, topic)
+					.connectManual(b, e, rf)
+					.connectProvisional(c, d, rf)
+					.connectAuthored(d, opinion, rf)
 					.build();
 
 			// starting state
@@ -515,21 +493,21 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			// delete starting b-manual->e connection
-			bNode.getSingleRelationship(topic.getManualType(), Direction.OUTGOING).delete();
+			bNode.getSingleRelationship(rf.getManualType(), Direction.OUTGOING).delete();
 
 			// create b-manual->c connection
-			bNode.createRelationshipTo(cNode, topic.getManualType());
+			bNode.createRelationshipTo(cNode, rf.getManualType());
 
 			// this should trigger the a-flip, then the c-flip, and then... cycle!
 			bNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, rf));
 
 			// b should manually point to c
-			assertEquals(cNode, bNode.getSingleRelationship(topic.getManualType(), Direction.OUTGOING).getEndNode());
+			assertEquals(cNode, bNode.getSingleRelationship(rf.getManualType(), Direction.OUTGOING).getEndNode());
 
 			// provisionals should be gone from c->a, a->b
-			assertFalse(cNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
-			assertFalse(aNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
+			assertFalse(cNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
+			assertFalse(aNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
 
 			tx.failure();
 		}
@@ -546,16 +524,14 @@ public class ConnectivityUtilsTest {
 			// the same for c
 			String opinion = "opinion";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.connectRanked(b, a, 2)
 					.connectRanked(b, c, 1)
-					.connectAuthored(a, opinion, topic)
-					.connectAuthored(c, opinion, topic)
+					.connectAuthored(a, opinion, rf)
+					.connectAuthored(c, opinion, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -565,15 +541,15 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, topic));
+					.forEach(r -> ConnectivityUtils.flipGainedConnection(r, rf));
 
 			// b should now provisionally point to a
-			assertEquals(startNode, bNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
+			assertEquals(startNode, bNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
 
 			// incoming to cNode should be ranked from b
-			assertEquals(bNode, cNode.getSingleRelationship(topic.getRankedType(), Direction.INCOMING).getStartNode());
+			assertEquals(bNode, cNode.getSingleRelationship(rf.getRankedType(), Direction.INCOMING).getStartNode());
 
-			assertFalse(cNode.hasRelationship(topic.getProvisionalType()));
+			assertFalse(cNode.hasRelationship(rf.getProvisionalType()));
 
 			tx.failure();
 		}
@@ -598,13 +574,11 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			// only one incoming here
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityUtils.flipLostConnection(r, topic));
+					.forEach(r -> ConnectivityUtils.flipLostConnection(r, rf));
 
-			long targetedIncoming = TraversalUtils.goStream(topic.getTargetedIncoming(startNode)).count();
+			long targetedIncoming = TraversalUtils.goStream(rf.getTargetedIncoming(startNode)).count();
 
 			// nothing really happens, because only ranked incoming
 			assertEquals(0, targetedIncoming);
@@ -620,14 +594,12 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.connectRanked(b, a, 1)
-					.connectManual(c, a, topic)
+					.connectManual(c, a, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -636,14 +608,14 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityUtils.flipLostConnection(r, topic));
+					.forEach(r -> ConnectivityUtils.flipLostConnection(r, rf));
 
-			long targetedIncoming = TraversalUtils.goStream(topic.getTargetedIncoming(startNode)).count();
+			long targetedIncoming = TraversalUtils.goStream(rf.getTargetedIncoming(startNode)).count();
 
 			// incoming manual connections should remain unchanged
 			assertEquals(1, targetedIncoming);
-			assertTrue(cNode.hasRelationship(topic.getManualType()));
-			assertEquals(startNode, cNode.getSingleRelationship(topic.getManualType(), Direction.OUTGOING).getEndNode());
+			assertTrue(cNode.hasRelationship(rf.getManualType()));
+			assertEquals(startNode, cNode.getSingleRelationship(rf.getManualType(), Direction.OUTGOING).getEndNode());
 
 			tx.failure();
 		}
@@ -656,14 +628,12 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
-					.connectProvisional(b, a, topic)
-					.connectProvisional(c, a, topic)
+					.connectProvisional(b, a, rf)
+					.connectProvisional(c, a, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -673,14 +643,14 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityUtils.flipLostConnection(r, topic));
+					.forEach(r -> ConnectivityUtils.flipLostConnection(r, rf));
 
-			long targetedIncoming = TraversalUtils.goStream(topic.getTargetedIncoming(startNode)).count();
+			long targetedIncoming = TraversalUtils.goStream(rf.getTargetedIncoming(startNode)).count();
 
 			// incoming provisional connections should disappear
 			assertEquals(0, targetedIncoming);
-			assertFalse(bNode.hasRelationship(topic.getProvisionalType()));
-			assertFalse(cNode.hasRelationship(topic.getProvisionalType()));
+			assertFalse(bNode.hasRelationship(rf.getProvisionalType()));
+			assertFalse(cNode.hasRelationship(rf.getProvisionalType()));
 
 			tx.failure();
 		}
@@ -694,8 +664,6 @@ public class ConnectivityUtilsTest {
 			String c = "c";
 			String d = "d";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
@@ -705,9 +673,9 @@ public class ConnectivityUtilsTest {
 					.connectRanked(a, b, 2)
 					.connectRanked(b, c, 1)
 					.connectRanked(c, a, 1)
-					.connectProvisional(a, d, topic)
-					.connectProvisional(b, c, topic)
-					.connectProvisional(c, a, topic)
+					.connectProvisional(a, d, rf)
+					.connectProvisional(b, c, rf)
+					.connectProvisional(c, a, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -720,12 +688,12 @@ public class ConnectivityUtilsTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			topic.getTargetedOutgoing(aNode).ifPresent(r -> ConnectivityUtils.flipLostConnection(r, topic));
+			rf.getTargetedOutgoing(aNode).ifPresent(r -> ConnectivityUtils.flipLostConnection(r, rf));
 
 			// the cycle should clear all provisional relationships
-			assertFalse(aNode.hasRelationship(topic.getProvisionalType()));
-			assertFalse(bNode.hasRelationship(topic.getProvisionalType()));
-			assertFalse(cNode.hasRelationship(topic.getProvisionalType()));
+			assertFalse(aNode.hasRelationship(rf.getProvisionalType()));
+			assertFalse(bNode.hasRelationship(rf.getProvisionalType()));
+			assertFalse(cNode.hasRelationship(rf.getProvisionalType()));
 
 			tx.failure();
 		}
@@ -739,14 +707,12 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
-					.connectProvisional(a, b, topic)
-					.connectProvisional(b, c, topic)
+					.connectProvisional(a, b, rf)
+					.connectProvisional(b, c, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -755,11 +721,11 @@ public class ConnectivityUtilsTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityUtils.clearIfCycle(startNode, topic);
+			ConnectivityUtils.clearIfCycle(startNode, rf);
 
 			// incoming provisional connections should disappear
-			assertEquals(bNode, startNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
-			assertEquals(cNode, bNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING).getEndNode());
+			assertEquals(bNode, startNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
+			assertEquals(cNode, bNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
 
 			tx.failure();
 		}
@@ -773,15 +739,13 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
-					.connectProvisional(a, b, topic)
-					.connectProvisional(b, c, topic)
-					.connectProvisional(c, a, topic)
+					.connectProvisional(a, b, rf)
+					.connectProvisional(b, c, rf)
+					.connectProvisional(c, a, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -790,12 +754,12 @@ public class ConnectivityUtilsTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityUtils.clearIfCycle(startNode, topic);
+			ConnectivityUtils.clearIfCycle(startNode, rf);
 
 			// incoming provisional connections should disappear
-			assertFalse(startNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
-			assertFalse(bNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
-			assertFalse(cNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
+			assertFalse(startNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
+			assertFalse(bNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
+			assertFalse(cNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
 
 			tx.failure();
 		}
@@ -809,17 +773,15 @@ public class ConnectivityUtilsTest {
 			String c = "c";
 			String nonCyclee = "nonCyclee";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.addPerson(nonCyclee, 4)
-					.connectProvisional(a, b, topic)
-					.connectProvisional(b, c, topic)
-					.connectProvisional(c, a, topic)
-					.connectProvisional(nonCyclee, a, topic)
+					.connectProvisional(a, b, rf)
+					.connectProvisional(b, c, rf)
+					.connectProvisional(c, a, rf)
+					.connectProvisional(nonCyclee, a, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -829,15 +791,15 @@ public class ConnectivityUtilsTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 			Node nonCycleNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 4);
 
-			assertTrue(nonCycleNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
+			assertTrue(nonCycleNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
 
-			ConnectivityUtils.clearIfCycle(startNode, topic);
+			ConnectivityUtils.clearIfCycle(startNode, rf);
 
 			// incoming provisional connections should disappear
-			assertFalse(startNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
-			assertFalse(bNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
-			assertFalse(cNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
-			assertFalse(nonCycleNode.hasRelationship(Direction.OUTGOING, topic.getProvisionalType()));
+			assertFalse(startNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
+			assertFalse(bNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
+			assertFalse(cNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
+			assertFalse(nonCycleNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
 
 			tx.failure();
 		}
@@ -850,15 +812,13 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
-					.connectManual(a, b, topic)
-					.connectManual(b, c, topic)
-					.connectManual(c, a, topic)
+					.connectManual(a, b, rf)
+					.connectManual(b, c, rf)
+					.connectManual(c, a, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -867,12 +827,12 @@ public class ConnectivityUtilsTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityUtils.clearIfCycle(startNode, topic);
+			ConnectivityUtils.clearIfCycle(startNode, rf);
 
 			// incoming provisional connections should disappear
-			assertTrue(startNode.hasRelationship(Direction.OUTGOING, topic.getManualType()));
-			assertTrue(bNode.hasRelationship(Direction.OUTGOING, topic.getManualType()));
-			assertTrue(cNode.hasRelationship(Direction.OUTGOING, topic.getManualType()));
+			assertTrue(startNode.hasRelationship(Direction.OUTGOING, rf.getManualType()));
+			assertTrue(bNode.hasRelationship(Direction.OUTGOING, rf.getManualType()));
+			assertTrue(cNode.hasRelationship(Direction.OUTGOING, rf.getManualType()));
 
 			tx.failure();
 		}
@@ -888,8 +848,6 @@ public class ConnectivityUtilsTest {
 
 			String connected = "connected";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
@@ -897,14 +855,14 @@ public class ConnectivityUtilsTest {
 					.addPerson(connected, 4)
 					.connectRanked(a, b, 1)
 					.connectRanked(a, c, 2)
-					.connectProvisional(b, connected, topic)
+					.connectProvisional(b, connected, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, topic);
+			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, rf);
 
 			assertTrue(provisionalTarget.isPresent());
 			assertEquals(b, provisionalTarget.get().getProperty("name"));
@@ -922,8 +880,6 @@ public class ConnectivityUtilsTest {
 
 			String connected = "connected";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
@@ -931,14 +887,14 @@ public class ConnectivityUtilsTest {
 					.addPerson(connected, 4)
 					.connectRanked(a, b, 1)
 					.connectRanked(a, c, 2)
-					.connectProvisional(c, connected, topic)
+					.connectProvisional(c, connected, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, topic);
+			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, rf);
 
 			assertTrue(provisionalTarget.isPresent());
 			assertEquals(c, provisionalTarget.get().getProperty("name"));
@@ -966,7 +922,7 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, new RelationshipFilter.Topic(1));
+			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, rf);
 
 			assertFalse(provisionalTarget.isPresent());
 
@@ -991,7 +947,7 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityUtils.isConnected(startNode, new RelationshipFilter.Topic(1));
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, rf);
 
 			assertFalse(isConnected);
 
@@ -1004,19 +960,18 @@ public class ConnectivityUtilsTest {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";
 			String opinion = "opinion";
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addOpinion(opinion, 2)
-					.connectAuthored(a, opinion, topic)
+					.connectAuthored(a, opinion, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityUtils.isConnected(startNode, topic);
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, rf);
 
 			assertTrue(isConnected);
 
@@ -1030,19 +985,17 @@ public class ConnectivityUtilsTest {
 			String a = "a";
 			String b = "b";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
-					.connectProvisional(a, b, topic)
+					.connectProvisional(a, b, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityUtils.isConnected(startNode, topic);
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, rf);
 
 			assertTrue(isConnected);
 
@@ -1056,21 +1009,20 @@ public class ConnectivityUtilsTest {
 			String a = "a";
 			String b = "b";
 			String c = "c";
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
-					.connectManual(a, b, topic)
-					.connectProvisional(b, c, topic)
+					.connectManual(a, b, rf)
+					.connectProvisional(b, c, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityUtils.isConnected(startNode, topic);
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, rf);
 
 			assertTrue(isConnected);
 
@@ -1085,14 +1037,12 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
-					.connectProvisional(a, b, topic)
-					.connectManual(b, c, topic)
+					.connectProvisional(a, b, rf)
+					.connectManual(b, c, rf)
 					.connectRanked(c, a, 1)
 					.build();
 
@@ -1100,7 +1050,7 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, topic);
+			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, rf);
 
 			assertTrue(cycle.isEmpty());
 
@@ -1115,22 +1065,20 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
-					.connectProvisional(a, b, topic)
-					.connectProvisional(b, c, topic)
-					.connectProvisional(c, a, topic)
+					.connectProvisional(a, b, rf)
+					.connectProvisional(b, c, rf)
+					.connectProvisional(c, a, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, topic);
+			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, rf);
 
 			assertEquals(3, cycle.size());
 
@@ -1146,25 +1094,23 @@ public class ConnectivityUtilsTest {
 			String c = "c";
 			String d = "d";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
-
 			// there's a b->c->d cycle, but a is outside of it
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.addPerson(d, 4)
-					.connectProvisional(a, b, topic)
-					.connectProvisional(b, c, topic)
-					.connectProvisional(c, d, topic)
-					.connectProvisional(d, b, topic)
+					.connectProvisional(a, b, rf)
+					.connectProvisional(b, c, rf)
+					.connectProvisional(c, d, rf)
+					.connectProvisional(d, b, rf)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, topic);
+			Collection<Node> cycle = ConnectivityUtils.getCycle(startNode, rf);
 
 			assertTrue(cycle.isEmpty());
 

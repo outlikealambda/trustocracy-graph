@@ -37,7 +37,7 @@ public class MaintainedConnectivityTest {
 			String z = "z";
 			String opinion = "opinion";
 
-			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
+			RelationshipFilter rf = new RelationshipFilter(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -49,10 +49,10 @@ public class MaintainedConnectivityTest {
 					.connectRanked(a, z, 1)
 					.connectRanked(a, c, 2)
 					.connectRanked(a, b, 3)
-					.connectManual(a, b, topic)
-					.connectProvisional(b, d, topic)
-					.connectProvisional(c, d, topic)
-					.connectAuthored(d, opinion, topic)
+					.connectManual(a, b, rf)
+					.connectProvisional(b, d, rf)
+					.connectProvisional(c, d, rf)
+					.connectAuthored(d, opinion, rf)
 					.build();
 
 			session.run(create);

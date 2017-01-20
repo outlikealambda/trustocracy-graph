@@ -33,17 +33,17 @@ public class MaintainedConnectivity {
 			@Name("userId") long personId,
 			@Name("topicId") long topicId
 	) {
-		RelationshipFilter.Topic topic = new RelationshipFilter.Topic(topicId);
+		RelationshipFilter rf = new RelationshipFilter(topicId);
 
 		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, personId);
 
-		Map<Node, Relationship> adjacentLinks = goStream(user.getRelationships(Direction.OUTGOING, topic.getRankedType()))
+		Map<Node, Relationship> adjacentLinks = goStream(user.getRelationships(Direction.OUTGOING, rf.getRankedType()))
 				.collect(toMap(
 						Relationship::getEndNode,
 						Function.identity()
 				));
 
-		Optional<Node> topicTarget = topic.getTargetedOutgoing(user)
+		Optional<Node> topicTarget = rf.getTargetedOutgoing(user)
 				.map(outgoingTargeted -> {
 					Node t = outgoingTargeted.getEndNode();
 
@@ -56,7 +56,7 @@ public class MaintainedConnectivity {
 		Map<Node, Node> adjacentAuthors = adjacentLinks.keySet().stream()
 				.map(adjacent -> Pair.of(
 						adjacent,
-						ConnectivityUtils.getDesignatedAuthor(adjacent, topic)
+						ConnectivityUtils.getDesignatedAuthor(adjacent, rf)
 				))
 				.filter(p -> p.getRight().isPresent())
 				.collect(toMap(
@@ -68,7 +68,7 @@ public class MaintainedConnectivity {
 				.distinct()
 				.collect(toMap(
 						Function.identity(),
-						author -> author.getSingleRelationship(topic.getAuthoredType(), Direction.OUTGOING).getEndNode()
+						author -> author.getSingleRelationship(rf.getAuthoredType(), Direction.OUTGOING).getEndNode()
 				));
 
 		return TraversalResult.mergeIntoTraversalResults(adjacentLinks, adjacentAuthors, authorOpinions, topicTarget);

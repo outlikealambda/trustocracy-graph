@@ -34,81 +34,79 @@ public class RelationshipFilter {
 		}
 	}
 
-	public static class Topic {
-		private final RelationshipType manualType;
-		private final RelationshipType provisionalType;
-		private final RelationshipType authoredType;
+	private final RelationshipType manualType;
+	private final RelationshipType provisionalType;
+	private final RelationshipType authoredType;
 
-		public Topic(long topic) {
-			this.manualType = Type.manual(topic);
-			this.provisionalType = Type.provisional(topic);
-			this.authoredType = Type.authored(topic);
-		}
+	public RelationshipFilter(long topic) {
+		this.manualType = Type.manual(topic);
+		this.provisionalType = Type.provisional(topic);
+		this.authoredType = Type.authored(topic);
+	}
 
-		public boolean isManual(Relationship r) {
-			return r.isType(manualType);
-		}
+	public boolean isManual(Relationship r) {
+										  return r.isType(manualType);
+																	  }
 
-		public RelationshipType getManualType() {
-			return manualType;
-		}
+	public RelationshipType getManualType() {
+										  return manualType;
+															}
 
-		public boolean isProvisional(Relationship r) {
-			return r.isType(provisionalType);
-		}
+	public boolean isProvisional(Relationship r) {
+											   return r.isType(provisionalType);
+																				}
 
-		public RelationshipType getProvisionalType() {
-			return provisionalType;
-		}
+	public RelationshipType getProvisionalType() {
+											   return provisionalType;
+																	  }
 
-		public RelationshipType getAuthoredType() {
-			return authoredType;
-		}
+	public RelationshipType getAuthoredType() {
+		return authoredType;
+	}
 
-		public boolean isRanked(Relationship r) {
-			return r.isType(RANKED_TYPE);
-		}
+	public boolean isRanked(Relationship r) {
+										  return r.isType(RANKED_TYPE);
+																	   }
 
-		public RelationshipType getRankedType() {
-			return RANKED_TYPE;
-		}
+	public RelationshipType getRankedType() {
+										  return RANKED_TYPE;
+															 }
 
-		public Iterable<Relationship> getAllIncoming(Node n) {
-			return getAll(n, Direction.INCOMING);
-		}
+	public Iterable<Relationship> getAllIncoming(Node n) {
+													   return getAll(n, Direction.INCOMING);
+																							}
 
-		public Iterable<Relationship> getAllOutgoing(Node n) {
-			return getAll(n, Direction.OUTGOING);
-		}
+	public Iterable<Relationship> getAllOutgoing(Node n) {
+													   return getAll(n, Direction.OUTGOING);
+																							}
 
-		public Iterable<Relationship> getTargetedIncoming(Node n) {
-			return getTargeted(n, Direction.INCOMING);
-		}
+	public Iterable<Relationship> getTargetedIncoming(Node n) {
+															return getTargeted(n, Direction.INCOMING);
+																									  }
 
-		public Optional<Relationship> getTargetedOutgoing(Node n) {
-			return atMostOneOf(getTargeted(n, Direction.OUTGOING), "targeted outgoing connection");
-		}
+	public Optional<Relationship> getTargetedOutgoing(Node n) {
+		return atMostOneOf(getTargeted(n, Direction.OUTGOING), "targeted outgoing connection");
+	}
 
-		private static <T> Optional<T> atMostOneOf(Iterable<T> things, String description) {
-			List<T> list = new ArrayList<>();
+	private static <T> Optional<T> atMostOneOf(Iterable<T> things, String description) {
+		List<T> list = new ArrayList<>();
 
-			things.forEach(list::add);
+		things.forEach(list::add);
 
-			if (list.size() > 1) {
-				throw new IllegalStateException(String.format("Can only have a %s per topic", description));
-			} else if (list.size() == 1) {
-				return Optional.of(list.get(0));
-			} else {
-				return Optional.empty();
-			}
-		}
-
-		private Iterable<Relationship> getTargeted(Node n, Direction d) {
-			return n.getRelationships(d, getManualType(), getProvisionalType());
-		}
-
-		private Iterable<Relationship> getAll(Node n, Direction d) {
-			return n.getRelationships(d, getManualType(), getProvisionalType(), getRankedType());
+		if (list.size() > 1) {
+			throw new IllegalStateException(String.format("Can only have a %s per topic", description));
+		} else if (list.size() == 1) {
+			return Optional.of(list.get(0));
+		} else {
+			return Optional.empty();
 		}
 	}
+
+	private Iterable<Relationship> getTargeted(Node n, Direction d) {
+																  return n.getRelationships(d, getManualType(), getProvisionalType());
+																																	  }
+
+	private Iterable<Relationship> getAll(Node n, Direction d) {
+			return n.getRelationships(d, getManualType(), getProvisionalType(), getRankedType());
+		}
 }

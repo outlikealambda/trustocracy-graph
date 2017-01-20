@@ -47,18 +47,18 @@ public class TestUtils {
 			return this;
 		}
 
-		public Builder connectManual(String source, String target, RelationshipFilter.Topic topic) {
-			creates.add(connect(source, target, topic.getManualType().name()));
+		public Builder connectManual(String source, String target, RelationshipFilter rf) {
+			creates.add(connect(source, target, rf.getManualType().name()));
 			return this;
 		}
 
-		public Builder connectProvisional(String source, String target, RelationshipFilter.Topic topic) {
-			creates.add(connect(source, target, topic.getProvisionalType().name()));
+		public Builder connectProvisional(String source, String target, RelationshipFilter rf) {
+			creates.add(connect(source, target, rf.getProvisionalType().name()));
 			return this;
 		}
 
-		public Builder connectAuthored(String source, String target, RelationshipFilter.Topic topic) {
-			creates.add(connect(source, target, topic.getAuthoredType().name()));
+		public Builder connectAuthored(String source, String target, RelationshipFilter rf) {
+			creates.add(connect(source, target, rf.getAuthoredType().name()));
 			return this;
 		}
 
