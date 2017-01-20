@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class ConnectivityUtils {
-	public static Optional<Node> getDesignatedAuthor(Node source, Relationships.Topic topic) {
+	public static Optional<Node> getDesignatedAuthor(Node source, RelationshipFilter.Topic topic) {
 		Node current = source;
 
 		while(true) {
@@ -34,22 +34,22 @@ public final class ConnectivityUtils {
 		}
 	}
 
-	public static int calculateInfluence(Node target, Relationships.Topic topic) {
+	public static int calculateInfluence(Node target, RelationshipFilter.Topic topic) {
 		return TraversalUtils.goStream(topic.getTargetedIncoming(target))
 				.map(Relationship::getStartNode)
 				.map(source -> calculateInfluence(source, topic))
 				.reduce(1, (total, perSourceTotal) -> total + perSourceTotal);
 	}
 
-	public static void clearTarget(Node source, Relationships.Topic topic) {
+	public static void clearTarget(Node source, RelationshipFilter.Topic topic) {
 		changeTarget(source, null, topic);
 	}
 
-	public static void setTarget(Node source, Node target, Relationships.Topic topic) {
+	public static void setTarget(Node source, Node target, RelationshipFilter.Topic topic) {
 		changeTarget(source, target, topic);
 	}
 
-	private static void changeTarget(Node source, Node t, Relationships.Topic topic) {
+	private static void changeTarget(Node source, Node t, RelationshipFilter.Topic topic) {
 		boolean wasConnected = isConnected(source, topic);
 
 		// Delete the existing outgoing relationship if it exists
@@ -89,7 +89,7 @@ public final class ConnectivityUtils {
 		}
 	}
 
-	public static void flipGainedConnection(Relationship incoming, Relationships.Topic topic) {
+	public static void flipGainedConnection(Relationship incoming, RelationshipFilter.Topic topic) {
 		Node source = incoming.getStartNode();
 
 		if (topic.isManual(incoming)) {
@@ -133,7 +133,7 @@ public final class ConnectivityUtils {
 	}
 
 	// traverses through incoming connections
-	public static void flipLostConnection(Relationship incoming, Relationships.Topic topic) {
+	public static void flipLostConnection(Relationship incoming, RelationshipFilter.Topic topic) {
 
 		Node source = incoming.getStartNode();
 
@@ -169,7 +169,7 @@ public final class ConnectivityUtils {
 		// Nothing to do here
 	}
 
-	public static Optional<Node> getProvisionalTarget(Node n, Relationships.Topic topic) {
+	public static Optional<Node> getProvisionalTarget(Node n, RelationshipFilter.Topic topic) {
 		return TraversalUtils.goStream(n.getRelationships(Direction.OUTGOING, topic.getRankedType()))
 				.sorted(rankComparator)
 				.map(Relationship::getEndNode)
@@ -177,7 +177,7 @@ public final class ConnectivityUtils {
 				.findFirst();
 	}
 
-	public static boolean isConnected(Node n, Relationships.Topic topic) {
+	public static boolean isConnected(Node n, RelationshipFilter.Topic topic) {
 		if (n.hasRelationship(
 				Direction.OUTGOING,
 				topic.getAuthoredType(),
@@ -192,7 +192,7 @@ public final class ConnectivityUtils {
 				.orElse(false);
 	}
 
-	public static boolean clearIfCycle(Node start, Relationships.Topic topic) {
+	public static boolean clearIfCycle(Node start, RelationshipFilter.Topic topic) {
 		Collection<Node> cycle = getCycle(start, topic);
 
 		// great
@@ -209,7 +209,7 @@ public final class ConnectivityUtils {
 
 	// empty collection if no cycle
 	// no guaranteed order; switch to LinkedHashSet if that's necessary
-	public static Collection<Node> getCycle(Node node, Relationships.Topic topic) {
+	public static Collection<Node> getCycle(Node node, RelationshipFilter.Topic topic) {
 		LinkedHashSet<Node> visited = new LinkedHashSet<>();
 		Node current = node;
 		visited.add(node);
@@ -239,7 +239,7 @@ public final class ConnectivityUtils {
 
 	// Delete all provisional relationships in this cycle,
 	// because a cycle has no endpoint...
-	private static void clearCyclicProvisions(Collection<Node> cycle, Relationships.Topic topic) {
+	private static void clearCyclicProvisions(Collection<Node> cycle, RelationshipFilter.Topic topic) {
 		cycle.stream()
 				.map(cycleNode -> cycleNode.getSingleRelationship(topic.getProvisionalType(), Direction.OUTGOING))
 				.filter(Objects::nonNull)
@@ -249,7 +249,7 @@ public final class ConnectivityUtils {
 	// If we've created a cycle, we may have lost an endpoint, and
 	// so we have to flip any incoming connections which previously
 	// routed to that endpoint
-	private static void flipCyclicIncoming(Collection<Node> cycle, Relationships.Topic topic) {
+	private static void flipCyclicIncoming(Collection<Node> cycle, RelationshipFilter.Topic topic) {
 		cycle.stream()
 				.map(topic::getTargetedIncoming)
 				.flatMap(TraversalUtils::goStream)
@@ -259,7 +259,7 @@ public final class ConnectivityUtils {
 
 	}
 
-	private static Optional<Relationship> getSelected(Node n, Relationships.Topic topic) {
+	private static Optional<Relationship> getSelected(Node n, RelationshipFilter.Topic topic) {
 		return Optional.of(n)
 				.flatMap(topic::getTargetedOutgoing);
 	}

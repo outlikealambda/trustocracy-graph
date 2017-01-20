@@ -8,7 +8,7 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.harness.junit.Neo4jRule;
-import outlikealambda.traversal.Relationships;
+import outlikealambda.traversal.RelationshipFilter;
 import outlikealambda.traversal.TestUtils;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class MaintainedConnectivityTest {
 			String z = "z";
 			String opinion = "opinion";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)

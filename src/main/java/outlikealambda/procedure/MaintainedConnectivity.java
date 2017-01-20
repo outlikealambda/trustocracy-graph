@@ -11,7 +11,7 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.model.TraversalResult;
 import outlikealambda.traversal.ConnectivityUtils;
-import outlikealambda.traversal.Relationships;
+import outlikealambda.traversal.RelationshipFilter;
 
 import java.util.Map;
 import java.util.Optional;
@@ -33,7 +33,7 @@ public class MaintainedConnectivity {
 			@Name("userId") long personId,
 			@Name("topicId") long topicId
 	) {
-		Relationships.Topic topic = new Relationships.Topic(topicId);
+		RelationshipFilter.Topic topic = new RelationshipFilter.Topic(topicId);
 
 		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, personId);
 

@@ -30,7 +30,7 @@ public class ConnectivityUtilsTest {
 			String z = "z";
 			String opinion = "opinion";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -76,7 +76,7 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String z = "z";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -121,7 +121,7 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String o = "opinion";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -164,7 +164,7 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String o = "opinion";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -209,7 +209,7 @@ public class ConnectivityUtilsTest {
 			String d = "d";
 			String o = "opinion";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -253,7 +253,7 @@ public class ConnectivityUtilsTest {
 			String c = "c";
 			String o = "opinion";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -290,7 +290,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -320,7 +320,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -356,7 +356,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -392,7 +392,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -435,7 +435,7 @@ public class ConnectivityUtilsTest {
 			// the same for c
 			String opinion = "opinion";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -482,7 +482,7 @@ public class ConnectivityUtilsTest {
 			// c needs to pass the isConnected check, so point it to an opinion
 			String opinion = "opinion";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			/*
 			 * This is the starting state of the graph.  What kicks it off is
@@ -546,7 +546,7 @@ public class ConnectivityUtilsTest {
 			// the same for c
 			String opinion = "opinion";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -598,7 +598,7 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			// only one incoming here
 			startNode.getRelationships(Direction.INCOMING)
@@ -620,7 +620,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -656,7 +656,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -694,7 +694,7 @@ public class ConnectivityUtilsTest {
 			String c = "c";
 			String d = "d";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -739,7 +739,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -773,7 +773,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -809,7 +809,7 @@ public class ConnectivityUtilsTest {
 			String c = "c";
 			String nonCyclee = "nonCyclee";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -850,7 +850,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -888,7 +888,7 @@ public class ConnectivityUtilsTest {
 
 			String connected = "connected";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -922,7 +922,7 @@ public class ConnectivityUtilsTest {
 
 			String connected = "connected";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -966,7 +966,7 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, new Relationships.Topic(1));
+			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, new RelationshipFilter.Topic(1));
 
 			assertFalse(provisionalTarget.isPresent());
 
@@ -991,7 +991,7 @@ public class ConnectivityUtilsTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityUtils.isConnected(startNode, new Relationships.Topic(1));
+			boolean isConnected = ConnectivityUtils.isConnected(startNode, new RelationshipFilter.Topic(1));
 
 			assertFalse(isConnected);
 
@@ -1004,7 +1004,7 @@ public class ConnectivityUtilsTest {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";
 			String opinion = "opinion";
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -1030,7 +1030,7 @@ public class ConnectivityUtilsTest {
 			String a = "a";
 			String b = "b";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -1056,7 +1056,7 @@ public class ConnectivityUtilsTest {
 			String a = "a";
 			String b = "b";
 			String c = "c";
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -1085,7 +1085,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String acyclicCreate = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -1115,7 +1115,7 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			String create = new TestUtils.Builder()
 					.addPerson(a, 1)
@@ -1146,7 +1146,7 @@ public class ConnectivityUtilsTest {
 			String c = "c";
 			String d = "d";
 
-			Relationships.Topic topic = new Relationships.Topic(1);
+			RelationshipFilter.Topic topic = new RelationshipFilter.Topic(1);
 
 			// there's a b->c->d cycle, but a is outside of it
 			String acyclicCreate = new TestUtils.Builder()

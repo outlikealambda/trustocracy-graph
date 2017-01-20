@@ -9,14 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public final class Relationships {
+public class RelationshipFilter {
 	private static final String MANUAL = "MANUAL";
 	private static final String PROVISIONAL = "PROVISIONAL";
 	private static final String AUTHORED = "AUTHORED";
 	private static final String RANKED = "RANKED";
 	private static final RelationshipType RANKED_TYPE = RelationshipType.withName(RANKED);
 
-	private static class Types {
+	private static class Type {
 		private static RelationshipType manual(long topic) {
 			return combineTypeAndId(MANUAL, topic);
 		}
@@ -34,17 +34,15 @@ public final class Relationships {
 		}
 	}
 
-	private Relationships() {}
-
 	public static class Topic {
 		private final RelationshipType manualType;
 		private final RelationshipType provisionalType;
 		private final RelationshipType authoredType;
 
 		public Topic(long topic) {
-			this.manualType = Types.manual(topic);
-			this.provisionalType = Types.provisional(topic);
-			this.authoredType = Types.authored(topic);
+			this.manualType = Type.manual(topic);
+			this.provisionalType = Type.provisional(topic);
+			this.authoredType = Type.authored(topic);
 		}
 
 		public boolean isManual(Relationship r) {
