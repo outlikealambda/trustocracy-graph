@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toMap;
 import static outlikealambda.traversal.TraversalUtils.goStream;
 
-public class ConnectedGraphTraversal {
+public class MaintainedConnectivity {
 	private static final Label PERSON_LABEL = Label.label("Person");
 	private static final String PERSON_ID = "id";
 

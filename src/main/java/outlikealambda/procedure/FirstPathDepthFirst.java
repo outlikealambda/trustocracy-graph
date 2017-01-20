@@ -30,7 +30,7 @@ import static org.neo4j.function.Predicates.not;
 import static outlikealambda.traversal.ConnectivityUtils.rankComparator;
 import static outlikealambda.traversal.TraversalUtils.goStream;
 
-public class FirstPathDepthFirstTraversal {
+public class FirstPathDepthFirst {
 	private static final Label PERSON_LABEL = Label.label("Person");
 	private static final Label TOPIC_LABEL = Label.label("Topic");
 	private static final Label OPINION_LABEL = Label.label("Opinion");

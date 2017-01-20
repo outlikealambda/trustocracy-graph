@@ -38,7 +38,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static outlikealambda.traversal.TraversalUtils.goStream;
 
-public class DistanceTraversal {
+public class FindClosest {
 	private static final Label PERSON_LABEL = Label.label("Person");
 	private static final Label TOPIC_LABEL = Label.label("Topic");
 	private static final Label OPINION_LABEL = Label.label("Opinion");

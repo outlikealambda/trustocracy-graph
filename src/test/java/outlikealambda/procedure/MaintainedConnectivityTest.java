@@ -8,7 +8,6 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.harness.junit.Neo4jRule;
-import outlikealambda.procedure.ConnectedGraphTraversal;
 import outlikealambda.traversal.Relationships;
 import outlikealambda.traversal.TestUtils;
 
@@ -20,10 +19,10 @@ import static outlikealambda.traversal.TestUtils.containsFriendAuthorNameCombo;
 import static outlikealambda.traversal.TestUtils.containsFriendWithoutAuthor;
 import static outlikealambda.traversal.TestUtils.friendIsInfluencer;
 
-public class ConnectedGraphTraversalTest {
+public class MaintainedConnectivityTest {
 	@ClassRule
 	public static Neo4jRule neo4j = new Neo4jRule()
-			.withProcedure(ConnectedGraphTraversal.class);
+			.withProcedure(MaintainedConnectivity.class);
 
 	@Test
 	public void t() {

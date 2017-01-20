@@ -10,17 +10,16 @@ import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.harness.junit.Neo4jRule;
-import outlikealambda.procedure.FirstPathDepthFirstTraversal;
 
 import java.util.List;
 
 import static outlikealambda.traversal.TestUtils.containsFriendAuthorNameCombo;
 import static outlikealambda.traversal.TestUtils.containsFriendWithoutAuthor;
 
-public class FirstPathDepthFirstTraversalTest {
+public class FirstPathDepthFirstTest {
 	@Rule
 	public Neo4jRule neo4j = new Neo4jRule()
-			.withProcedure(FirstPathDepthFirstTraversal.class);
+			.withProcedure(FirstPathDepthFirst.class);
 
 
 	@Test

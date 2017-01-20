@@ -11,16 +11,15 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.harness.junit.Neo4jRule;
-import outlikealambda.procedure.DistanceTraversal;
 
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class DistanceTraversalTest {
+public class FindClosestTraversalTest {
 	@Rule
 	public Neo4jRule neo4j = new Neo4jRule()
-			.withProcedure(DistanceTraversal.class);
+			.withProcedure(FindClosest.class);
 
 	private Driver driver;
 
