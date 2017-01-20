@@ -1,4 +1,4 @@
-package outlikealambda.traversal;
+package outlikealambda.procedure;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -11,6 +11,7 @@ import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.model.TraversalResult;
+import outlikealambda.traversal.TraversalUtils;
 
 import java.util.Comparator;
 import java.util.HashSet;

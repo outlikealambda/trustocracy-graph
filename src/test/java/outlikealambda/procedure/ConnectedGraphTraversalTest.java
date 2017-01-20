@@ -1,4 +1,4 @@
-package outlikealambda.traversal;
+package outlikealambda.procedure;
 
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -8,6 +8,9 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.harness.junit.Neo4jRule;
+import outlikealambda.procedure.ConnectedGraphTraversal;
+import outlikealambda.traversal.Relationships;
+import outlikealambda.traversal.TestUtils;
 
 import java.util.List;
 

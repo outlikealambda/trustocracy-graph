@@ -1,4 +1,4 @@
-package outlikealambda.traversal;
+package outlikealambda.procedure;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
@@ -10,6 +10,8 @@ import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.model.TraversalResult;
+import outlikealambda.traversal.ConnectivityUtils;
+import outlikealambda.traversal.Relationships;
 
 import java.util.Map;
 import java.util.Optional;

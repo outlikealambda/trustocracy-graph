@@ -1,4 +1,4 @@
-package outlikealambda.traversal;
+package outlikealambda.procedure;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -10,6 +10,7 @@ import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.harness.junit.Neo4jRule;
+import outlikealambda.procedure.FirstPathDepthFirstTraversal;
 
 import java.util.List;
 

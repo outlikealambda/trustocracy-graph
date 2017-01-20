@@ -1,4 +1,4 @@
-package outlikealambda.traversal;
+package outlikealambda.procedure;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -21,6 +21,10 @@ import outlikealambda.model.Connection;
 import outlikealambda.model.Influence;
 import outlikealambda.model.Journey;
 import outlikealambda.model.Person;
+import outlikealambda.traversal.DistanceEvaluators;
+import outlikealambda.traversal.RelationshipLabel;
+import outlikealambda.traversal.TraversalUtils;
+import outlikealambda.traversal.WeightedRelationshipSelectorFactory;
 import outlikealambda.traversal.expand.TotalWeightPathExpander;
 
 import java.util.List;
