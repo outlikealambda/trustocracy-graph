@@ -94,9 +94,15 @@ public class FirstPathDepthFirstTraversal {
 			Map<Node, Node> friendAuthors,
 			Map<Node, Node> authorOpinions
 	) {
-		return friendLinks.keySet().stream()
-				.map(friend -> {
-					Person friendPerson = Person.create(friend, friendLinks.get(friend));
+		return friendLinks.entrySet().stream()
+				.sorted((friendAndRel1, friendAndRel2) ->
+						ConnectivityUtils.rankComparator.compare(
+								friendAndRel1.getValue(),
+								friendAndRel2.getValue()))
+				.map(friendAndRel -> {
+					Node friend = friendAndRel.getKey();
+					Relationship rel = friendAndRel.getValue();
+					Person friendPerson = Person.create(friend, rel);
 
 					Optional<Node> maybeAuthor = Optional.ofNullable(friendAuthors.get(friend));
 
