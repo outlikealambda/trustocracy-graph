@@ -94,7 +94,7 @@ public class ConnectivityAdjuster {
 		}
 	}
 
-	public void flipGainedConnection(Relationship incoming) {
+	void flipGainedConnection(Relationship incoming) {
 		Node source = incoming.getStartNode();
 
 		if (rf.isManual(incoming)) {
@@ -137,7 +137,7 @@ public class ConnectivityAdjuster {
 	}
 
 	// traverses through incoming connections
-	public void flipLostConnection(Relationship incoming) {
+	void flipLostConnection(Relationship incoming) {
 
 		Node source = incoming.getStartNode();
 
@@ -171,7 +171,7 @@ public class ConnectivityAdjuster {
 		// Nothing to do here
 	}
 
-	public Optional<Node> getProvisionalTarget(Node n) {
+	Optional<Node> getProvisionalTarget(Node n) {
 		return TraversalUtils.goStream(n.getRelationships(Direction.OUTGOING, rf.getRankedType()))
 				.sorted(RelationshipFilter.rankComparator)
 				.map(Relationship::getEndNode)
@@ -179,7 +179,7 @@ public class ConnectivityAdjuster {
 				.findFirst();
 	}
 
-	public boolean isConnected(Node n) {
+	boolean isConnected(Node n) {
 		if (n.hasRelationship(
 				Direction.OUTGOING,
 				rf.getAuthoredType(),
@@ -194,7 +194,7 @@ public class ConnectivityAdjuster {
 				.orElse(false);
 	}
 
-	public boolean clearIfCycle(Node start) {
+	boolean clearIfCycle(Node start) {
 		Collection<Node> cycle = getCycle(start);
 
 		// great
@@ -211,7 +211,7 @@ public class ConnectivityAdjuster {
 
 	// empty collection if no cycle
 	// no guaranteed order; switch to LinkedHashSet if that's necessary
-	public Collection<Node> getCycle(Node node) {
+	Collection<Node> getCycle(Node node) {
 		LinkedHashSet<Node> visited = new LinkedHashSet<>();
 		Node current = node;
 		visited.add(node);
@@ -258,7 +258,6 @@ public class ConnectivityAdjuster {
 				// skip any remaining manual relationships between the nodes in the cycle
 				.filter(r -> !cycle.contains(r.getStartNode()))
 				.forEach(this::flipLostConnection);
-
 	}
 
 	private Optional<Relationship> getSelected(Node n) {

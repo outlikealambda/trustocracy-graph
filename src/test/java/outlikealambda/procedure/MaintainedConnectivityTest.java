@@ -25,7 +25,7 @@ public class MaintainedConnectivityTest {
 			.withProcedure(MaintainedConnectivity.class);
 
 	@Test
-	public void t() {
+	public void friendAuthorOpinion() {
 		try (
 				Driver driver = GraphDatabase.driver(neo4j.boltURI(), Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()

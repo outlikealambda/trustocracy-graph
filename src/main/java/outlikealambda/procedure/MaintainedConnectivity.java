@@ -30,13 +30,13 @@ public class MaintainedConnectivity {
 
 	@Procedure("friend.author.opinion")
 	public Stream<TraversalResult> traverse(
-			@Name("userId") long personId,
+			@Name("userId") long userId,
 			@Name("topicId") long topicId
 	) {
 		RelationshipFilter rf = new RelationshipFilter(topicId);
 		ConnectivityAdjuster adjuster = new ConnectivityAdjuster(rf);
 
-		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, personId);
+		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, userId);
 
 		Map<Node, Relationship> adjacentLinks = goStream(user.getRelationships(Direction.OUTGOING, rf.getRankedType()))
 				.collect(toMap(
@@ -73,5 +73,33 @@ public class MaintainedConnectivity {
 				));
 
 		return TraversalResult.mergeIntoTraversalResults(adjacentLinks, adjacentAuthors, authorOpinions, topicTarget);
+	}
+
+	@Procedure("target.set")
+	public void setTarget(
+			@Name("userId") long userId,
+			@Name("targetId") long targetId,
+			@Name("topicId") long topicId
+	) {
+		RelationshipFilter rf = new RelationshipFilter(topicId);
+		ConnectivityAdjuster adjuster = new ConnectivityAdjuster(rf);
+
+		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, userId);
+		Node target = gdb.findNode(PERSON_LABEL, PERSON_ID, targetId);
+
+		adjuster.setTarget(user, target);
+	}
+
+	@Procedure("target.clear")
+	public void clearTarget(
+			@Name("userId") long userId,
+			@Name("topicId") long topicId
+	) {
+		RelationshipFilter rf = new RelationshipFilter(topicId);
+		ConnectivityAdjuster adjuster = new ConnectivityAdjuster(rf);
+
+		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, userId);
+
+		adjuster.clearTarget(user);
 	}
 }
