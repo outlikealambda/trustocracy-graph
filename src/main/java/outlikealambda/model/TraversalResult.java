@@ -28,7 +28,8 @@ public class TraversalResult {
 	public static Stream<TraversalResult> mergeIntoTraversalResults(
 			Map<Node, Relationship> friendLinks,
 			Map<Node, Node> friendAuthors,
-			Map<Node, Node> authorOpinions
+			Map<Node, Node> authorOpinions,
+			Optional<Node> target
 	) {
 		return friendLinks.entrySet().stream()
 				.sorted((friendAndRel1, friendAndRel2) ->
@@ -38,7 +39,7 @@ public class TraversalResult {
 				.map(friendAndRel -> {
 					Node friend = friendAndRel.getKey();
 					Relationship friendRel = friendAndRel.getValue();
-					Person friendPerson = Person.create(friend, friendRel);
+					Person friendPerson = Person.create(friend, friendRel, target.map(friend::equals).orElse(false));
 
 					return Optional.ofNullable(friendAuthors.get(friend))
 							.map(author -> new TraversalResult(

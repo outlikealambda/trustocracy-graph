@@ -85,7 +85,7 @@ public class FirstPathDepthFirstTraversal {
 				.filter(not(List::isEmpty))
 				.collect(toMap(LinkedList::getFirst, LinkedList::getLast));
 
-		return TraversalResult.mergeIntoTraversalResults(friendLinks, friendAuthorNodes, authorOpinions);
+		return TraversalResult.mergeIntoTraversalResults(friendLinks, friendAuthorNodes, authorOpinions, Optional.empty());
 	}
 
 	private static class DFTraversal {

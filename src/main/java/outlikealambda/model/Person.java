@@ -15,16 +15,22 @@ public class Person {
 	private final Long id;
 	private final String relationship;
 	private final Long rank;
+	private final Boolean isInfluencer;
 
 	public Person(String name, Long id, String relationship) {
 		this(name, id, relationship, -1L);
 	}
 
 	public Person(String name, Long id, String relationship, Long rank) {
+		this(name, id, relationship, rank, false);
+	}
+
+	public Person(String name, Long id, String relationship, Long rank, boolean isInfluencer) {
 		this.name = name;
 		this.id = id;
 		this.relationship = relationship;
 		this.rank = rank;
+		this.isInfluencer = isInfluencer;
 	}
 
 	public Map<String, Object> toMap() {
@@ -33,6 +39,7 @@ public class Person {
 		asMap.put("id", id);
 		asMap.put("relationship", relationship);
 		asMap.put("rank", rank);
+		asMap.put("isInfluencer", isInfluencer);
 
 		return asMap;
 	}
@@ -61,11 +68,11 @@ public class Person {
 				.toHashCode();
 	}
 
-	public static Person create(Node n) {
-		return create(n, null);
+	public static Person create(Node n, Relationship r) {
+		return create(n, r, false);
 	}
 
-	public static Person create(Node n, Relationship r) {
+	public static Person create(Node n, Relationship r, boolean isInfluencer) {
 		String name = (String) n.getProperty("name");
 
 		long id = (long) n.getProperty("id");
@@ -79,6 +86,6 @@ public class Person {
 				.map(rel -> (Long) rel.getProperty("rank"))
 				.orElse(-1L);
 
-		return new Person(name, id, relationship, rank);
+		return new Person(name, id, relationship, rank, isInfluencer);
 	}
 }

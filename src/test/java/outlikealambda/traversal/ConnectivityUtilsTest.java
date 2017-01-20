@@ -10,8 +10,6 @@ import org.neo4j.harness.junit.Neo4jRule;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -34,21 +32,21 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(d, 4),
-					person(z, 5),
-					opinion(opinion, 1),
-					connectRanked(a, b, 1),
-					connectRanked(b, d, 1),
-					connectRanked(z, a, 1),
-					connectProvisional(a, c, topic),
-					connectProvisional(b, c, topic),
-					connectProvisional(c, d, topic),
-					connectAuthored(d, opinion, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(d, 4)
+					.addPerson(z, 5)
+					.addOpinion(opinion, 1)
+					.connectRanked(a, b, 1)
+					.connectRanked(b, d, 1)
+					.connectRanked(z, a, 1)
+					.connectProvisional(a, c, topic)
+					.connectProvisional(b, c, topic)
+					.connectProvisional(c, d, topic)
+					.connectAuthored(d, opinion, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -80,19 +78,19 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(d, 4),
-					person(z, 5),
-					connectRanked(a, b, 1),
-					connectRanked(b, d, 1),
-					connectRanked(z, a, 1),
-					connectProvisional(a, c, topic),
-					connectProvisional(b, c, topic),
-					connectProvisional(c, d, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(d, 4)
+					.addPerson(z, 5)
+					.connectRanked(a, b, 1)
+					.connectRanked(b, d, 1)
+					.connectRanked(z, a, 1)
+					.connectProvisional(a, c, topic)
+					.connectProvisional(b, c, topic)
+					.connectProvisional(c, d, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -125,18 +123,18 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(d, 4),
-					opinion(o, 1),
-					connectRanked(a, b, 1),
-					connectRanked(b, d, 1),
-					connectAuthored(d, o, topic),
-					connectProvisional(a, b, topic),
-					connectProvisional(b, d, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(d, 4)
+					.addOpinion(o, 1)
+					.connectRanked(a, b, 1)
+					.connectRanked(b, d, 1)
+					.connectAuthored(d, o, topic)
+					.connectProvisional(a, b, topic)
+					.connectProvisional(b, d, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -168,20 +166,20 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(d, 4),
-					opinion(o, 1),
-					connectRanked(a, b, 1),
-					connectRanked(b, c, 1),
-					connectRanked(c, a, 1),
-					connectManual(a, c, topic),
-					connectAuthored(d, o, topic),
-					connectProvisional(b, c, topic),
-					connectProvisional(c, a, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(d, 4)
+					.addOpinion(o, 1)
+					.connectRanked(a, b, 1)
+					.connectRanked(b, c, 1)
+					.connectRanked(c, a, 1)
+					.connectManual(a, c, topic)
+					.connectAuthored(d, o, topic)
+					.connectProvisional(b, c, topic)
+					.connectProvisional(c, a, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -213,17 +211,17 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(d, 4),
-					opinion(o, 1),
-					connectRanked(a, c, 1),
-					connectRanked(d, a, 1),
-					connectManual(a, b, topic),
-					connectAuthored(c, o, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(d, 4)
+					.addOpinion(o, 1)
+					.connectRanked(a, c, 1)
+					.connectRanked(d, a, 1)
+					.connectManual(a, b, topic)
+					.connectAuthored(c, o, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -257,14 +255,14 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					opinion(o, 1),
-					connectRanked(a, b, 1),
-					connectAuthored(c, o, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addOpinion(o, 1)
+					.connectRanked(a, b, 1)
+					.connectAuthored(c, o, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -294,12 +292,12 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectManual(a, b, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectManual(a, b, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -324,13 +322,13 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectManual(b, a, topic),
-					connectRanked(c, b, 1))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectManual(b, a, topic)
+					.connectRanked(c, b, 1)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -360,13 +358,13 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectRanked(b, a, 1),
-					connectManual(b, c, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectRanked(b, a, 1)
+					.connectManual(b, c, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -396,14 +394,14 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectRanked(b, a, 2),
-					connectRanked(b, c, 1),
-					connectProvisional(b, c, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectRanked(b, a, 2)
+					.connectRanked(b, c, 1)
+					.connectProvisional(b, c, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -439,16 +437,16 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectRanked(b, a, 1),
-					connectRanked(b, c, 2),
-					connectProvisional(b, c, topic),
-					connectAuthored(a, opinion, topic),
-					connectAuthored(c, opinion, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectRanked(b, a, 1)
+					.connectRanked(b, c, 2)
+					.connectProvisional(b, c, topic)
+					.connectAuthored(a, opinion, topic)
+					.connectAuthored(c, opinion, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -494,20 +492,20 @@ public class ConnectivityUtilsTest {
 			 * This should trigger a cycle and the deletion of all provisional relationships
 			 *
 			 */
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(d, 4),
-					person(e, 5),
-					connectRanked(a, b, 1),
-					connectRanked(b, c, 1),
-					connectRanked(c, a, 1),
-					connectRanked(c, d, 2),
-					connectManual(b, e, topic),
-					connectProvisional(c, d, topic),
-					connectAuthored(d, opinion, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(d, 4)
+					.addPerson(e, 5)
+					.connectRanked(a, b, 1)
+					.connectRanked(b, c, 1)
+					.connectRanked(c, a, 1)
+					.connectRanked(c, d, 2)
+					.connectManual(b, e, topic)
+					.connectProvisional(c, d, topic)
+					.connectAuthored(d, opinion, topic)
+					.build();
 
 			// starting state
 			neo4j.getGraphDatabaseService().execute(create);
@@ -550,15 +548,15 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectRanked(b, a, 2),
-					connectRanked(b, c, 1),
-					connectAuthored(a, opinion, topic),
-					connectAuthored(c, opinion, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectRanked(b, a, 2)
+					.connectRanked(b, c, 1)
+					.connectAuthored(a, opinion, topic)
+					.connectAuthored(c, opinion, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -588,13 +586,13 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectRanked(b, a, 1),
-					connectRanked(c, a, 1))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectRanked(b, a, 1)
+					.connectRanked(c, a, 1)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -624,13 +622,13 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectRanked(b, a, 1),
-					connectManual(c, a, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectRanked(b, a, 1)
+					.connectManual(c, a, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -660,13 +658,13 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectProvisional(b, a, topic),
-					connectProvisional(c, a, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectProvisional(b, a, topic)
+					.connectProvisional(c, a, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -698,19 +696,19 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(d, 4),
-					connectRanked(a, d, 1),
-					connectRanked(a, b, 2),
-					connectRanked(b, c, 1),
-					connectRanked(c, a, 1),
-					connectProvisional(a, d, topic),
-					connectProvisional(b, c, topic),
-					connectProvisional(c, a, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(d, 4)
+					.connectRanked(a, d, 1)
+					.connectRanked(a, b, 2)
+					.connectRanked(b, c, 1)
+					.connectRanked(c, a, 1)
+					.connectProvisional(a, d, topic)
+					.connectProvisional(b, c, topic)
+					.connectProvisional(c, a, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -743,13 +741,13 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectProvisional(a, b, topic),
-					connectProvisional(b, c, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectProvisional(a, b, topic)
+					.connectProvisional(b, c, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -777,14 +775,14 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectProvisional(a, b, topic),
-					connectProvisional(b, c, topic),
-					connectProvisional(c, a, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectProvisional(a, b, topic)
+					.connectProvisional(b, c, topic)
+					.connectProvisional(c, a, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -813,16 +811,16 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(nonCyclee, 4),
-					connectProvisional(a, b, topic),
-					connectProvisional(b, c, topic),
-					connectProvisional(c, a, topic),
-					connectProvisional(nonCyclee, a, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(nonCyclee, 4)
+					.connectProvisional(a, b, topic)
+					.connectProvisional(b, c, topic)
+					.connectProvisional(c, a, topic)
+					.connectProvisional(nonCyclee, a, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -854,14 +852,14 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectManual(a, b, topic),
-					connectManual(b, c, topic),
-					connectManual(c, a, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectManual(a, b, topic)
+					.connectManual(b, c, topic)
+					.connectManual(c, a, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -890,23 +888,23 @@ public class ConnectivityUtilsTest {
 
 			String connected = "connected";
 
-			String provisional = "PROVISIONAL_1";
+			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String acyclicCreate = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(connected, 4),
-					connectRanked(a, b, 1),
-					connectRanked(a, c, 2),
-					connect(b, connected, provisional))
-					.collect(Collectors.joining(", "));
+			String acyclicCreate = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(connected, 4)
+					.connectRanked(a, b, 1)
+					.connectRanked(a, c, 2)
+					.connectProvisional(b, connected, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, new Relationships.Topic(1));
+			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, topic);
 
 			assertTrue(provisionalTarget.isPresent());
 			assertEquals(b, provisionalTarget.get().getProperty("name"));
@@ -924,23 +922,23 @@ public class ConnectivityUtilsTest {
 
 			String connected = "connected";
 
-			String provisional = "PROVISIONAL_1";
+			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String acyclicCreate = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(connected, 4),
-					connectRanked(a, b, 1),
-					connectRanked(a, c, 2),
-					connect(c, connected, provisional))
-					.collect(Collectors.joining(", "));
+			String acyclicCreate = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(connected, 4)
+					.connectRanked(a, b, 1)
+					.connectRanked(a, c, 2)
+					.connectProvisional(c, connected, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, new Relationships.Topic(1));
+			Optional<Node> provisionalTarget = ConnectivityUtils.getProvisionalTarget(startNode, topic);
 
 			assertTrue(provisionalTarget.isPresent());
 			assertEquals(c, provisionalTarget.get().getProperty("name"));
@@ -956,13 +954,13 @@ public class ConnectivityUtilsTest {
 			String b = "b";
 			String c = "c";
 
-			String acyclicCreate = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectRanked(a, b, 1),
-					connectRanked(a, c, 2))
-					.collect(Collectors.joining(", "));
+			String acyclicCreate = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectRanked(a, b, 1)
+					.connectRanked(a, c, 2)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
@@ -983,11 +981,11 @@ public class ConnectivityUtilsTest {
 			String a = "a";
 			String b = "b";
 
-			String acyclicCreate = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					connectRanked(a, b, 1))
-					.collect(Collectors.joining(", "));
+			String acyclicCreate = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.connectRanked(a, b, 1)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
@@ -1008,11 +1006,11 @@ public class ConnectivityUtilsTest {
 			String opinion = "opinion";
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String acyclicCreate = Stream.of(
-					"CREATE" + person(a, 1),
-					opinion(opinion, 2),
-					connectAuthored(a, opinion, topic))
-					.collect(Collectors.joining(", "));
+			String acyclicCreate = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addOpinion(opinion, 2)
+					.connectAuthored(a, opinion, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
@@ -1034,11 +1032,11 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String acyclicCreate = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					connectProvisional(a, b, topic))
-					.collect(Collectors.joining(", "));
+			String acyclicCreate = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.connectProvisional(a, b, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
@@ -1060,13 +1058,13 @@ public class ConnectivityUtilsTest {
 			String c = "c";
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String acyclicCreate = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 2),
-					connectManual(a, b, topic),
-					connectProvisional(b, c, topic))
-					.collect(Collectors.joining(", "));
+			String acyclicCreate = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectManual(a, b, topic)
+					.connectProvisional(b, c, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
@@ -1089,14 +1087,14 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String acyclicCreate = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectProvisional(a, b, topic),
-					connectManual(b, c, topic),
-					connectRanked(c, a, 1))
-					.collect(Collectors.joining(", "));
+			String acyclicCreate = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectProvisional(a, b, topic)
+					.connectManual(b, c, topic)
+					.connectRanked(c, a, 1)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
@@ -1119,14 +1117,14 @@ public class ConnectivityUtilsTest {
 
 			Relationships.Topic topic = new Relationships.Topic(1);
 
-			String create = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					connectProvisional(a, b, topic),
-					connectProvisional(b, c, topic),
-					connectProvisional(c, a, topic))
-					.collect(Collectors.joining(", "));
+			String create = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.connectProvisional(a, b, topic)
+					.connectProvisional(b, c, topic)
+					.connectProvisional(c, a, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
 
@@ -1151,16 +1149,16 @@ public class ConnectivityUtilsTest {
 			Relationships.Topic topic = new Relationships.Topic(1);
 
 			// there's a b->c->d cycle, but a is outside of it
-			String acyclicCreate = Stream.of(
-					"CREATE" + person(a, 1),
-					person(b, 2),
-					person(c, 3),
-					person(d, 3),
-					connectProvisional(a, b, topic),
-					connectProvisional(b, c, topic),
-					connectProvisional(c, d, topic),
-					connectProvisional(d, b, topic))
-					.collect(Collectors.joining(", "));
+			String acyclicCreate = new TestUtils.Builder()
+					.addPerson(a, 1)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(d, 4)
+					.connectProvisional(a, b, topic)
+					.connectProvisional(b, c, topic)
+					.connectProvisional(c, d, topic)
+					.connectProvisional(d, b, topic)
+					.build();
 
 			neo4j.getGraphDatabaseService().execute(acyclicCreate);
 
@@ -1172,34 +1170,5 @@ public class ConnectivityUtilsTest {
 
 			tx.failure();
 		}
-	}
-
-
-	private static String person(String a, int id) {
-		return String.format("(%s:Person {name:'%s', id:%d})", a, a, id);
-	}
-
-	private static String opinion(String a, int id) {
-		return String.format("(%s:Opinion {id:%d})", a, id);
-	}
-
-	private static String connect(String a, String b, String r) {
-		return String.format("(%s)-[:%s]->(%s)", a, r, b);
-	}
-
-	private static String connectManual(String a, String b, Relationships.Topic topic) {
-		return connect(a, b, topic.getManualType().name());
-	}
-
-	private static String connectProvisional(String a, String b, Relationships.Topic topic) {
-		return connect(a, b, topic.getProvisionalType().name());
-	}
-
-	private static String connectAuthored(String a, String b, Relationships.Topic topic) {
-		return connect(a, b, topic.getAuthoredType().name());
-	}
-
-	private static String connectRanked(String a, String b, int rank) {
-		return connect(a, b, String.format("RANKED {rank:%d}", rank));
 	}
 }

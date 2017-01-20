@@ -13,6 +13,9 @@ import org.neo4j.harness.junit.Neo4jRule;
 
 import java.util.List;
 
+import static outlikealambda.traversal.TestUtils.containsFriendAuthorNameCombo;
+import static outlikealambda.traversal.TestUtils.containsFriendWithoutAuthor;
+
 public class FirstPathDepthFirstTraversalTest {
 	@Rule
 	public Neo4jRule neo4j = new Neo4jRule()
@@ -189,18 +192,6 @@ public class FirstPathDepthFirstTraversalTest {
 
 
 		return sb.toString();
-	}
-
-	private boolean containsFriendAuthorNameCombo(String friendName, String authorName, List<Record> records) {
-		return records.stream()
-				.filter(r -> r.get("friend").asMap().get("name").equals(friendName))
-				.anyMatch(r -> r.get("author").asMap().get("name").equals(authorName));
-	}
-
-	private boolean containsFriendWithoutAuthor(String friendName, List<Record> records) {
-		return records.stream()
-				.filter(r -> r.get("friend").asMap().get("name").equals(friendName))
-				.anyMatch(r -> r.get("author").asMap().get("name") == null);
 	}
 
 }
