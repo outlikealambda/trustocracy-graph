@@ -21,32 +21,24 @@ public final class Relationships {
 	private static final RelationshipType RANKED_TYPE = RelationshipType.withName(RANKED);
 
 	public static class Types {
-		public static RelationshipType manual(int topic) {
+		public static RelationshipType manual(long topic) {
 			return combineTypeAndId(MANUAL, topic);
 		}
 
-		public static RelationshipType provisional(int topic) {
+		public static RelationshipType provisional(long topic) {
 			return combineTypeAndId(PROVISIONAL, topic);
 		}
 
-		public static RelationshipType authored(int topic) {
+		public static RelationshipType authored(long topic) {
 			return combineTypeAndId(AUTHORED, topic);
 		}
 
 		public static RelationshipType ranked() {
 			return RANKED_TYPE;
 		}
-		private static RelationshipType combineTypeAndId(String s, int id) {
+		private static RelationshipType combineTypeAndId(String s, long id) {
 			return RelationshipType.withName(s + "_" + id);
 		}
-	}
-
-	public static boolean isRanked(Relationship r) {
-		return r.isType(ranked());
-	}
-
-	public static boolean isManual(Relationship r, int topic) {
-		return r.isType(manual(topic));
 	}
 
 	private Relationships() {}
@@ -56,7 +48,7 @@ public final class Relationships {
 		private final RelationshipType provisionalType;
 		private final RelationshipType authoredType;
 
-		public Topic(int topic) {
+		public Topic(long topic) {
 			this.manualType = Types.manual(topic);
 			this.provisionalType = Types.provisional(topic);
 			this.authoredType = Types.authored(topic);
