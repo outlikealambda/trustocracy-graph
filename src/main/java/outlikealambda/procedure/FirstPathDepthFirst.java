@@ -11,6 +11,7 @@ import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.model.TraversalResult;
+import outlikealambda.traversal.RelationshipFilter;
 import outlikealambda.traversal.TraversalUtils;
 
 import java.util.Comparator;
@@ -27,7 +28,6 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 import static org.neo4j.function.Predicates.not;
-import static outlikealambda.traversal.ConnectivityUtils.rankComparator;
 import static outlikealambda.traversal.TraversalUtils.goStream;
 
 public class FirstPathDepthFirst {
@@ -171,7 +171,7 @@ public class FirstPathDepthFirst {
 			}
 
 			// must both be trusts
-			return rankComparator.compare(left, right);
+			return RelationshipFilter.rankComparator.compare(left, right);
 		};
 	}
 }

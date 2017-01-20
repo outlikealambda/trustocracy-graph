@@ -10,7 +10,7 @@ import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.model.TraversalResult;
-import outlikealambda.traversal.ConnectivityUtils;
+import outlikealambda.traversal.ConnectivityAdjuster;
 import outlikealambda.traversal.RelationshipFilter;
 
 import java.util.Map;
@@ -56,7 +56,7 @@ public class MaintainedConnectivity {
 		Map<Node, Node> adjacentAuthors = adjacentLinks.keySet().stream()
 				.map(adjacent -> Pair.of(
 						adjacent,
-						ConnectivityUtils.getDesignatedAuthor(adjacent, rf)
+						ConnectivityAdjuster.getDesignatedAuthor(adjacent, rf)
 				))
 				.filter(p -> p.getRight().isPresent())
 				.collect(toMap(

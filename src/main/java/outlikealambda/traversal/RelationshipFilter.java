@@ -6,6 +6,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,6 +87,13 @@ public class RelationshipFilter {
 
 	public Optional<Relationship> getTargetedOutgoing(Node n) {
 		return atMostOneOf(getTargeted(n, Direction.OUTGOING), "targeted outgoing connection");
+	}
+
+	public static Comparator<Relationship> rankComparator =
+			(left, right) -> getRank(left) < getRank(right) ? -1 : 1;
+
+	private static long getRank(Relationship r) {
+		return (long) r.getProperty("rank");
 	}
 
 	private static <T> Optional<T> atMostOneOf(Iterable<T> things, String description) {

@@ -7,12 +7,11 @@ import outlikealambda.utils.Optionals;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class ConnectivityUtils {
+public final class ConnectivityAdjuster {
 	public static Optional<Node> getDesignatedAuthor(Node source, RelationshipFilter rf) {
 		Node current = source;
 
@@ -171,7 +170,7 @@ public final class ConnectivityUtils {
 
 	public static Optional<Node> getProvisionalTarget(Node n, RelationshipFilter rf) {
 		return TraversalUtils.goStream(n.getRelationships(Direction.OUTGOING, rf.getRankedType()))
-				.sorted(rankComparator)
+				.sorted(RelationshipFilter.rankComparator)
 				.map(Relationship::getEndNode)
 				.filter(target -> isConnected(target, rf))
 				.findFirst();
@@ -264,12 +263,5 @@ public final class ConnectivityUtils {
 				.flatMap(rf::getTargetedOutgoing);
 	}
 
-	private ConnectivityUtils() {}
-
-	public static Comparator<Relationship> rankComparator =
-			(left, right) -> getRank(left) < getRank(right) ? -1 : 1;
-
-	private static long getRank(Relationship r) {
-		return (long) r.getProperty("rank");
-	}
+	private ConnectivityAdjuster() {}
 }
