@@ -6,12 +6,8 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-
-import static outlikealambda.traversal.Relationships.Types.manual;
-import static outlikealambda.traversal.Relationships.Types.ranked;
 
 public final class Relationships {
 	private static final String MANUAL = "MANUAL";
@@ -20,22 +16,19 @@ public final class Relationships {
 	private static final String RANKED = "RANKED";
 	private static final RelationshipType RANKED_TYPE = RelationshipType.withName(RANKED);
 
-	public static class Types {
-		public static RelationshipType manual(long topic) {
+	private static class Types {
+		private static RelationshipType manual(long topic) {
 			return combineTypeAndId(MANUAL, topic);
 		}
 
-		public static RelationshipType provisional(long topic) {
+		private static RelationshipType provisional(long topic) {
 			return combineTypeAndId(PROVISIONAL, topic);
 		}
 
-		public static RelationshipType authored(long topic) {
+		private static RelationshipType authored(long topic) {
 			return combineTypeAndId(AUTHORED, topic);
 		}
 
-		public static RelationshipType ranked() {
-			return RANKED_TYPE;
-		}
 		private static RelationshipType combineTypeAndId(String s, long id) {
 			return RelationshipType.withName(s + "_" + id);
 		}
@@ -95,14 +88,18 @@ public final class Relationships {
 		}
 
 		public Optional<Relationship> getTargetedOutgoing(Node n) {
-			List<Relationship> outgoing = new ArrayList<>();
+			return atMostOneOf(getTargeted(n, Direction.OUTGOING), "targeted outgoing connection");
+		}
 
-			getTargeted(n, Direction.OUTGOING).forEach(outgoing::add);
+		private static <T> Optional<T> atMostOneOf(Iterable<T> things, String description) {
+			List<T> list = new ArrayList<>();
 
-			if (outgoing.size() > 1) {
-				throw new IllegalStateException("nodes can only have a single targeted outgoing connection per topic");
-			} else if (outgoing.size() == 1) {
-				return Optional.of(outgoing.get(0));
+			things.forEach(list::add);
+
+			if (list.size() > 1) {
+				throw new IllegalStateException(String.format("Can only have a %s per topic", description));
+			} else if (list.size() == 1) {
+				return Optional.of(list.get(0));
 			} else {
 				return Optional.empty();
 			}

@@ -10,7 +10,6 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
-import outlikealambda.model.Person;
 import outlikealambda.model.TraversalResult;
 
 import java.util.Comparator;
@@ -86,35 +85,7 @@ public class FirstPathDepthFirstTraversal {
 				.filter(not(List::isEmpty))
 				.collect(toMap(LinkedList::getFirst, LinkedList::getLast));
 
-		return mergeResults(friendLinks, friendAuthorNodes, authorOpinions);
-	}
-
-	private Stream<TraversalResult> mergeResults(
-			Map<Node, Relationship> friendLinks,
-			Map<Node, Node> friendAuthors,
-			Map<Node, Node> authorOpinions
-	) {
-		return friendLinks.entrySet().stream()
-				.sorted((friendAndRel1, friendAndRel2) ->
-						ConnectivityUtils.rankComparator.compare(
-								friendAndRel1.getValue(),
-								friendAndRel2.getValue()))
-				.map(friendAndRel -> {
-					Node friend = friendAndRel.getKey();
-					Relationship rel = friendAndRel.getValue();
-					Person friendPerson = Person.create(friend, rel);
-
-					Optional<Node> maybeAuthor = Optional.ofNullable(friendAuthors.get(friend));
-
-					// friends may not be connected to an author, so optional
-					Optional<Person> authorPerson = maybeAuthor.map(a -> Person.create(a, friendLinks.get(a)));
-
-					Optional<Map<String, Object>> opinion = maybeAuthor
-							.map(authorOpinions::get)
-							.map(Node::getAllProperties);
-
-					return new TraversalResult(friendPerson, authorPerson, opinion);
-				});
+		return TraversalResult.mergeIntoTraversalResults(friendLinks, friendAuthorNodes, authorOpinions);
 	}
 
 	private static class DFTraversal {
