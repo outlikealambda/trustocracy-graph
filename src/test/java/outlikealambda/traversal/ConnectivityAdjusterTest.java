@@ -22,6 +22,8 @@ public class ConnectivityAdjusterTest {
 
 	private static RelationshipFilter rf = new RelationshipFilter(1);
 
+	private static ConnectivityAdjuster adjuster = new ConnectivityAdjuster(rf);
+
 	@Test
 	public void getDesignatedAuthor() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
@@ -57,11 +59,11 @@ public class ConnectivityAdjusterTest {
 			Node zNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 5);
 
 			// should not count z-RANKED->a as influence
-			assertEquals(dNode, ConnectivityAdjuster.getDesignatedAuthor(aNode, rf).get());
-			assertEquals(dNode, ConnectivityAdjuster.getDesignatedAuthor(bNode, rf).get());
-			assertEquals(dNode, ConnectivityAdjuster.getDesignatedAuthor(cNode, rf).get());
-			assertEquals(dNode, ConnectivityAdjuster.getDesignatedAuthor(dNode, rf).get());
-			assertFalse(ConnectivityAdjuster.getDesignatedAuthor(zNode, rf).isPresent());
+			assertEquals(dNode, adjuster.getDesignatedAuthor(aNode).get());
+			assertEquals(dNode, adjuster.getDesignatedAuthor(bNode).get());
+			assertEquals(dNode, adjuster.getDesignatedAuthor(cNode).get());
+			assertEquals(dNode, adjuster.getDesignatedAuthor(dNode).get());
+			assertFalse(adjuster.getDesignatedAuthor(zNode).isPresent());
 
 			tx.failure();
 		}
@@ -99,11 +101,11 @@ public class ConnectivityAdjusterTest {
 			Node zNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 5);
 
 			// should not count z-RANKED->a as influence
-			assertEquals(1, ConnectivityAdjuster.calculateInfluence(aNode, rf));
-			assertEquals(1, ConnectivityAdjuster.calculateInfluence(bNode, rf));
-			assertEquals(3, ConnectivityAdjuster.calculateInfluence(cNode, rf));
-			assertEquals(4, ConnectivityAdjuster.calculateInfluence(dNode, rf));
-			assertEquals(1, ConnectivityAdjuster.calculateInfluence(zNode, rf));
+			assertEquals(1, adjuster.calculateInfluence(aNode));
+			assertEquals(1, adjuster.calculateInfluence(bNode));
+			assertEquals(3, adjuster.calculateInfluence(cNode));
+			assertEquals(4, adjuster.calculateInfluence(dNode));
+			assertEquals(1, adjuster.calculateInfluence(zNode));
 
 			tx.failure();
 		}
@@ -139,7 +141,7 @@ public class ConnectivityAdjusterTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			// creating b-MANUAL->c should delete b-PROVISIONAL->c and a-PROVISIONAL->b
-			ConnectivityAdjuster.setTarget(bNode, cNode, rf);
+			adjuster.setTarget(bNode, cNode);
 
 			// the cycle should cause all provisional relationships to clear
 			assertFalse(rf.getTargetedOutgoing(aNode).isPresent());
@@ -183,7 +185,7 @@ public class ConnectivityAdjusterTest {
 			Node dNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 4);
 
 			// deleting a-MANUAL->d should connect a-PROVISIONAL->b and create a cycle
-			ConnectivityAdjuster.clearTarget(aNode, rf);
+			adjuster.clearTarget(aNode);
 
 			// the cycle should cause all provisional relationships to clear
 			assertFalse(rf.getTargetedOutgoing(aNode).isPresent());
@@ -223,7 +225,7 @@ public class ConnectivityAdjusterTest {
 			Node dNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 4);
 
 			// deleting a-MANUAL->b should connect a-PROVISIONAL->c and d-PROVISIONAL->a
-			ConnectivityAdjuster.clearTarget(aNode, rf);
+			adjuster.clearTarget(aNode);
 
 			// b should still manually point to a
 			assertEquals(cNode, rf.getTargetedOutgoing(aNode).get().getEndNode());
@@ -261,7 +263,7 @@ public class ConnectivityAdjusterTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			// connecting b-MANUAL->c should connect a-PROVISIONAL->b
-			ConnectivityAdjuster.setTarget(bNode, cNode, rf);
+			adjuster.setTarget(bNode, cNode);
 
 			// b should still manually point to a
 			assertEquals(cNode, rf.getTargetedOutgoing(bNode).get().getEndNode());
@@ -292,7 +294,7 @@ public class ConnectivityAdjusterTest {
 			Node aNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityAdjuster.setTarget(aNode, cNode, rf);
+			adjuster.setTarget(aNode, cNode);
 
 			// b should still manually point to a
 			assertEquals(cNode, rf.getTargetedOutgoing(aNode).get().getEndNode());
@@ -323,7 +325,7 @@ public class ConnectivityAdjusterTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityAdjuster.flipGainedConnection(r, rf));
+					.forEach(r -> adjuster.flipGainedConnection(r));
 
 			// b should still manually point to a
 			assertEquals(startNode, bNode.getSingleRelationship(rf.getManualType(), Direction.OUTGOING).getEndNode());
@@ -357,7 +359,7 @@ public class ConnectivityAdjusterTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityAdjuster.flipGainedConnection(r, rf));
+					.forEach(r -> adjuster.flipGainedConnection(r));
 
 			// b should still manually point to c
 			assertEquals(cNode, bNode.getSingleRelationship(rf.getManualType(), Direction.OUTGOING).getEndNode());
@@ -392,7 +394,7 @@ public class ConnectivityAdjusterTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityAdjuster.flipGainedConnection(r, rf));
+					.forEach(r -> adjuster.flipGainedConnection(r));
 
 			// b should still provisionally point to c
 			assertEquals(cNode, bNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
@@ -435,7 +437,7 @@ public class ConnectivityAdjusterTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityAdjuster.flipGainedConnection(r, rf));
+					.forEach(r -> adjuster.flipGainedConnection(r));
 
 			// b should now provisionally point to a
 			assertEquals(startNode, bNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
@@ -500,7 +502,7 @@ public class ConnectivityAdjusterTest {
 
 			// this should trigger the a-flip, then the c-flip, and then... cycle!
 			bNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityAdjuster.flipGainedConnection(r, rf));
+					.forEach(r -> adjuster.flipGainedConnection(r));
 
 			// b should manually point to c
 			assertEquals(cNode, bNode.getSingleRelationship(rf.getManualType(), Direction.OUTGOING).getEndNode());
@@ -541,7 +543,7 @@ public class ConnectivityAdjusterTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityAdjuster.flipGainedConnection(r, rf));
+					.forEach(r -> adjuster.flipGainedConnection(r));
 
 			// b should now provisionally point to a
 			assertEquals(startNode, bNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
@@ -576,7 +578,7 @@ public class ConnectivityAdjusterTest {
 
 			// only one incoming here
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityAdjuster.flipLostConnection(r, rf));
+					.forEach(r -> adjuster.flipLostConnection(r));
 
 			long targetedIncoming = TraversalUtils.goStream(rf.getTargetedIncoming(startNode)).count();
 
@@ -608,7 +610,7 @@ public class ConnectivityAdjusterTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityAdjuster.flipLostConnection(r, rf));
+					.forEach(r -> adjuster.flipLostConnection(r));
 
 			long targetedIncoming = TraversalUtils.goStream(rf.getTargetedIncoming(startNode)).count();
 
@@ -643,7 +645,7 @@ public class ConnectivityAdjusterTest {
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
 			startNode.getRelationships(Direction.INCOMING)
-					.forEach(r -> ConnectivityAdjuster.flipLostConnection(r, rf));
+					.forEach(r -> adjuster.flipLostConnection(r));
 
 			long targetedIncoming = TraversalUtils.goStream(rf.getTargetedIncoming(startNode)).count();
 
@@ -688,7 +690,7 @@ public class ConnectivityAdjusterTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			rf.getTargetedOutgoing(aNode).ifPresent(r -> ConnectivityAdjuster.flipLostConnection(r, rf));
+			rf.getTargetedOutgoing(aNode).ifPresent(r -> adjuster.flipLostConnection(r));
 
 			// the cycle should clear all provisional relationships
 			assertFalse(aNode.hasRelationship(rf.getProvisionalType()));
@@ -721,7 +723,7 @@ public class ConnectivityAdjusterTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityAdjuster.clearIfCycle(startNode, rf);
+			adjuster.clearIfCycle(startNode);
 
 			// incoming provisional connections should disappear
 			assertEquals(bNode, startNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING).getEndNode());
@@ -754,7 +756,7 @@ public class ConnectivityAdjusterTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityAdjuster.clearIfCycle(startNode, rf);
+			adjuster.clearIfCycle(startNode);
 
 			// incoming provisional connections should disappear
 			assertFalse(startNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
@@ -793,7 +795,7 @@ public class ConnectivityAdjusterTest {
 
 			assertTrue(nonCycleNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
 
-			ConnectivityAdjuster.clearIfCycle(startNode, rf);
+			adjuster.clearIfCycle(startNode);
 
 			// incoming provisional connections should disappear
 			assertFalse(startNode.hasRelationship(Direction.OUTGOING, rf.getProvisionalType()));
@@ -827,7 +829,7 @@ public class ConnectivityAdjusterTest {
 			Node bNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 2);
 			Node cNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 3);
 
-			ConnectivityAdjuster.clearIfCycle(startNode, rf);
+			adjuster.clearIfCycle(startNode);
 
 			// incoming provisional connections should disappear
 			assertTrue(startNode.hasRelationship(Direction.OUTGOING, rf.getManualType()));
@@ -862,7 +864,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Optional<Node> provisionalTarget = ConnectivityAdjuster.getProvisionalTarget(startNode, rf);
+			Optional<Node> provisionalTarget = adjuster.getProvisionalTarget(startNode);
 
 			assertTrue(provisionalTarget.isPresent());
 			assertEquals(b, provisionalTarget.get().getProperty("name"));
@@ -894,7 +896,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Optional<Node> provisionalTarget = ConnectivityAdjuster.getProvisionalTarget(startNode, rf);
+			Optional<Node> provisionalTarget = adjuster.getProvisionalTarget(startNode);
 
 			assertTrue(provisionalTarget.isPresent());
 			assertEquals(c, provisionalTarget.get().getProperty("name"));
@@ -922,7 +924,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Optional<Node> provisionalTarget = ConnectivityAdjuster.getProvisionalTarget(startNode, rf);
+			Optional<Node> provisionalTarget = adjuster.getProvisionalTarget(startNode);
 
 			assertFalse(provisionalTarget.isPresent());
 
@@ -947,7 +949,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityAdjuster.isConnected(startNode, rf);
+			boolean isConnected = adjuster.isConnected(startNode);
 
 			assertFalse(isConnected);
 
@@ -971,7 +973,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityAdjuster.isConnected(startNode, rf);
+			boolean isConnected = adjuster.isConnected(startNode);
 
 			assertTrue(isConnected);
 
@@ -995,7 +997,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityAdjuster.isConnected(startNode, rf);
+			boolean isConnected = adjuster.isConnected(startNode);
 
 			assertTrue(isConnected);
 
@@ -1022,7 +1024,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			boolean isConnected = ConnectivityAdjuster.isConnected(startNode, rf);
+			boolean isConnected = adjuster.isConnected(startNode);
 
 			assertTrue(isConnected);
 
@@ -1050,7 +1052,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Collection<Node> cycle = ConnectivityAdjuster.getCycle(startNode, rf);
+			Collection<Node> cycle = adjuster.getCycle(startNode);
 
 			assertTrue(cycle.isEmpty());
 
@@ -1078,7 +1080,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Collection<Node> cycle = ConnectivityAdjuster.getCycle(startNode, rf);
+			Collection<Node> cycle = adjuster.getCycle(startNode);
 
 			assertEquals(3, cycle.size());
 
@@ -1110,7 +1112,7 @@ public class ConnectivityAdjusterTest {
 
 			Node startNode = neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", 1);
 
-			Collection<Node> cycle = ConnectivityAdjuster.getCycle(startNode, rf);
+			Collection<Node> cycle = adjuster.getCycle(startNode);
 
 			assertTrue(cycle.isEmpty());
 

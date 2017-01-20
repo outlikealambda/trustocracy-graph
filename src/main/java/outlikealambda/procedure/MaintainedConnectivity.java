@@ -34,6 +34,7 @@ public class MaintainedConnectivity {
 			@Name("topicId") long topicId
 	) {
 		RelationshipFilter rf = new RelationshipFilter(topicId);
+		ConnectivityAdjuster adjuster = new ConnectivityAdjuster(rf);
 
 		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, personId);
 
@@ -56,7 +57,7 @@ public class MaintainedConnectivity {
 		Map<Node, Node> adjacentAuthors = adjacentLinks.keySet().stream()
 				.map(adjacent -> Pair.of(
 						adjacent,
-						ConnectivityAdjuster.getDesignatedAuthor(adjacent, rf)
+						adjuster.getDesignatedAuthor(adjacent)
 				))
 				.filter(p -> p.getRight().isPresent())
 				.collect(toMap(

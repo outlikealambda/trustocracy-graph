@@ -11,8 +11,14 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class ConnectivityAdjuster {
-	public static Optional<Node> getDesignatedAuthor(Node source, RelationshipFilter rf) {
+public class ConnectivityAdjuster {
+	private final RelationshipFilter rf;
+
+	public ConnectivityAdjuster(RelationshipFilter rf) {
+		this.rf = rf;
+	}
+
+	public Optional<Node> getDesignatedAuthor(Node source) {
 		Node current = source;
 
 		while(true) {
@@ -33,23 +39,23 @@ public final class ConnectivityAdjuster {
 		}
 	}
 
-	public static int calculateInfluence(Node target, RelationshipFilter rf) {
+	public int calculateInfluence(Node target) {
 		return TraversalUtils.goStream(rf.getTargetedIncoming(target))
 				.map(Relationship::getStartNode)
-				.map(source -> calculateInfluence(source, rf))
+				.map(this::calculateInfluence)
 				.reduce(1, (total, perSourceTotal) -> total + perSourceTotal);
 	}
 
-	public static void clearTarget(Node source, RelationshipFilter rf) {
-		changeTarget(source, null, rf);
+	public void clearTarget(Node source) {
+		changeTarget(source, null);
 	}
 
-	public static void setTarget(Node source, Node target, RelationshipFilter rf) {
-		changeTarget(source, target, rf);
+	public void setTarget(Node source, Node target) {
+		changeTarget(source, target);
 	}
 
-	private static void changeTarget(Node source, Node t, RelationshipFilter rf) {
-		boolean wasConnected = isConnected(source, rf);
+	private void changeTarget(Node source, Node t) {
+		boolean wasConnected = isConnected(source);
 
 		// Delete the existing outgoing relationship if it exists
 		// Could be either manual or provisioned
@@ -67,34 +73,34 @@ public final class ConnectivityAdjuster {
 				target -> source.createRelationshipTo(target, rf.getManualType()),
 
 				// try to create a provisional relationship
-				() -> getProvisionalTarget(source, rf)
+				() -> getProvisionalTarget(source)
 						.ifPresent(target -> source.createRelationshipTo(target, rf.getProvisionalType()))
 		);
 
-		if (clearIfCycle(source, rf)) {
+		if (clearIfCycle(source)) {
 			// cycle here, so clear and bail
 			return;
 		}
 
 		// flip if necessary
-		boolean isConnected = isConnected(source, rf);
+		boolean isConnected = isConnected(source);
 
 		if (wasConnected && !isConnected) {
-			rf.getAllIncoming(source).forEach(r -> flipLostConnection(r, rf));
+			rf.getAllIncoming(source).forEach(this::flipLostConnection);
 		}
 
 		if (!wasConnected && isConnected) {
-			rf.getAllIncoming(source).forEach(r -> flipGainedConnection(r, rf));
+			rf.getAllIncoming(source).forEach(this::flipGainedConnection);
 		}
 	}
 
-	public static void flipGainedConnection(Relationship incoming, RelationshipFilter rf) {
+	public void flipGainedConnection(Relationship incoming) {
 		Node source = incoming.getStartNode();
 
 		if (rf.isManual(incoming)) {
 			// source's sources could flip, depending on their state
 			rf.getAllIncoming(source)
-					.forEach(r -> flipGainedConnection(r, rf));
+					.forEach(this::flipGainedConnection);
 
 		} else if (rf.isRanked(incoming)) {
 			// source has other manual relationship, so won't flip
@@ -103,7 +109,7 @@ public final class ConnectivityAdjuster {
 			}
 
 			if (source.hasRelationship(rf.getProvisionalType(), Direction.OUTGOING)) {
-				getProvisionalTarget(source, rf)
+				getProvisionalTarget(source)
 						// We only care if the new provisional target is now the same
 						// as the ranked incoming relationship
 						.filter(incoming.getEndNode()::equals)
@@ -117,7 +123,7 @@ public final class ConnectivityAdjuster {
 							source.createRelationshipTo(newSourceTarget, rf.getProvisionalType());
 
 							// check if that creates a cycle
-							clearIfCycle(source, rf);
+							clearIfCycle(source);
 						});
 
 			} else {
@@ -125,14 +131,13 @@ public final class ConnectivityAdjuster {
 				source.createRelationshipTo(incoming.getEndNode(), rf.getProvisionalType());
 
 				// no previous target, so this must flip
-				rf.getAllIncoming(source)
-						.forEach(r -> flipGainedConnection(r, rf));
+				rf.getAllIncoming(source).forEach(this::flipGainedConnection);
 			}
 		}
 	}
 
 	// traverses through incoming connections
-	public static void flipLostConnection(Relationship incoming, RelationshipFilter rf) {
+	public void flipLostConnection(Relationship incoming) {
 
 		Node source = incoming.getStartNode();
 
@@ -140,27 +145,25 @@ public final class ConnectivityAdjuster {
 			// Manual incoming relationship means that sources of that manual source
 			// (grandchildren of this target) may flip (depending on their state),
 			// so continue traversal
-			rf.getTargetedIncoming(source)
-					.forEach(r -> flipLostConnection(r, rf));
+			rf.getTargetedIncoming(source).forEach(this::flipLostConnection);
 
 		} else if (rf.isProvisional(incoming)) {
 			// no longer valid, since parent has no connection
 			incoming.delete();
 
 			Optionals.ifElse(
-					getProvisionalTarget(source, rf),
+					getProvisionalTarget(source),
 
 					// Has a new target, so create that relationship,
 					// but also check if new target creates a cycle
 					newTarget -> {
 						source.createRelationshipTo(newTarget, rf.getProvisionalType());
-						clearIfCycle(source, rf);
+						clearIfCycle(source);
 					},
 
 					// No new target (which means this node has also flipped),
 					// so flip all incoming of the source node
-					() -> rf.getTargetedIncoming(source)
-							.forEach(r -> flipLostConnection(r, rf))
+					() -> rf.getTargetedIncoming(source).forEach(this::flipLostConnection)
 			);
 		}
 		// case: the incoming relationship is ranked
@@ -168,15 +171,15 @@ public final class ConnectivityAdjuster {
 		// Nothing to do here
 	}
 
-	public static Optional<Node> getProvisionalTarget(Node n, RelationshipFilter rf) {
+	public Optional<Node> getProvisionalTarget(Node n) {
 		return TraversalUtils.goStream(n.getRelationships(Direction.OUTGOING, rf.getRankedType()))
 				.sorted(RelationshipFilter.rankComparator)
 				.map(Relationship::getEndNode)
-				.filter(target -> isConnected(target, rf))
+				.filter(this::isConnected)
 				.findFirst();
 	}
 
-	public static boolean isConnected(Node n, RelationshipFilter rf) {
+	public boolean isConnected(Node n) {
 		if (n.hasRelationship(
 				Direction.OUTGOING,
 				rf.getAuthoredType(),
@@ -187,34 +190,34 @@ public final class ConnectivityAdjuster {
 		return Optional.of(n)
 				.map(current -> current.getSingleRelationship(rf.getManualType(), Direction.OUTGOING))
 				.map(Relationship::getEndNode)
-				.map(target -> isConnected(target, rf))
+				.map(this::isConnected)
 				.orElse(false);
 	}
 
-	public static boolean clearIfCycle(Node start, RelationshipFilter rf) {
-		Collection<Node> cycle = getCycle(start, rf);
+	public boolean clearIfCycle(Node start) {
+		Collection<Node> cycle = getCycle(start);
 
 		// great
 		if (cycle.isEmpty()) {
 			return false;
 		}
 
-		clearCyclicProvisions(cycle, rf);
+		clearCyclicProvisions(cycle);
 
-		flipCyclicIncoming(cycle, rf);
+		flipCyclicIncoming(cycle);
 
 		return true;
 	}
 
 	// empty collection if no cycle
 	// no guaranteed order; switch to LinkedHashSet if that's necessary
-	public static Collection<Node> getCycle(Node node, RelationshipFilter rf) {
+	public Collection<Node> getCycle(Node node) {
 		LinkedHashSet<Node> visited = new LinkedHashSet<>();
 		Node current = node;
 		visited.add(node);
 
 		while(true) {
-			Optional<Node> next = getSelected(current, rf)
+			Optional<Node> next = getSelected(current)
 					.map(Relationship::getEndNode);
 
 			// found the top of this trace, so no cycle
@@ -238,7 +241,7 @@ public final class ConnectivityAdjuster {
 
 	// Delete all provisional relationships in this cycle,
 	// because a cycle has no endpoint...
-	private static void clearCyclicProvisions(Collection<Node> cycle, RelationshipFilter rf) {
+	private void clearCyclicProvisions(Collection<Node> cycle) {
 		cycle.stream()
 				.map(cycleNode -> cycleNode.getSingleRelationship(rf.getProvisionalType(), Direction.OUTGOING))
 				.filter(Objects::nonNull)
@@ -248,20 +251,18 @@ public final class ConnectivityAdjuster {
 	// If we've created a cycle, we may have lost an endpoint, and
 	// so we have to flip any incoming connections which previously
 	// routed to that endpoint
-	private static void flipCyclicIncoming(Collection<Node> cycle, RelationshipFilter rf) {
+	private void flipCyclicIncoming(Collection<Node> cycle) {
 		cycle.stream()
 				.map(rf::getTargetedIncoming)
 				.flatMap(TraversalUtils::goStream)
 				// skip any remaining manual relationships between the nodes in the cycle
 				.filter(r -> !cycle.contains(r.getStartNode()))
-				.forEach(incoming -> flipLostConnection(incoming, rf));
+				.forEach(this::flipLostConnection);
 
 	}
 
-	private static Optional<Relationship> getSelected(Node n, RelationshipFilter rf) {
+	private Optional<Relationship> getSelected(Node n) {
 		return Optional.of(n)
 				.flatMap(rf::getTargetedOutgoing);
 	}
-
-	private ConnectivityAdjuster() {}
 }
