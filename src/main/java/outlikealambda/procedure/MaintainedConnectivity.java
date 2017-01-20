@@ -102,4 +102,17 @@ public class MaintainedConnectivity {
 
 		adjuster.clearTarget(user);
 	}
+
+	@Procedure("influence")
+	public Stream<Integer> calculateInfluence(
+			@Name("userId") long userId,
+			@Name("topicId") long topicId
+	) {
+		RelationshipFilter rf = new RelationshipFilter(topicId);
+		ConnectivityAdjuster adjuster = new ConnectivityAdjuster(rf);
+
+		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, userId);
+
+		return Stream.of(adjuster.calculateInfluence(user));
+	}
 }
