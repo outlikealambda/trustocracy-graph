@@ -10,46 +10,26 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import static outlikealambda.traversal.RelationshipTypes.authored;
+import static outlikealambda.traversal.RelationshipTypes.manual;
+import static outlikealambda.traversal.RelationshipTypes.onceAuthored;
+import static outlikealambda.traversal.RelationshipTypes.provisional;
+import static outlikealambda.traversal.RelationshipTypes.ranked;
+
 public class RelationshipFilter {
-	private static final String MANUAL = "MANUAL";
-	private static final String PROVISIONAL = "PROVISIONAL";
-	private static final String AUTHORED = "AUTHORED";
-	private static final String ONCE_AUTHORED = "ONCE_AUTHORED";
-	private static final String RANKED = "RANKED";
-	private static final RelationshipType RANKED_TYPE = RelationshipType.withName(RANKED);
-
-	private static class Type {
-		private static RelationshipType manual(long topic) {
-			return combineTypeAndId(MANUAL, topic);
-		}
-
-		private static RelationshipType provisional(long topic) {
-			return combineTypeAndId(PROVISIONAL, topic);
-		}
-
-		private static RelationshipType authored(long topic) {
-			return combineTypeAndId(AUTHORED, topic);
-		}
-
-		private static RelationshipType onceAuthored(long topic) {
-			return combineTypeAndId(ONCE_AUTHORED, topic);
-		}
-
-		private static RelationshipType combineTypeAndId(String s, long id) {
-			return RelationshipType.withName(s + "_" + id);
-		}
-	}
 
 	private final RelationshipType manualType;
 	private final RelationshipType provisionalType;
 	private final RelationshipType authoredType;
 	private final RelationshipType onceAuthoredType;
+	private final RelationshipType rankedType;
 
 	public RelationshipFilter(long topic) {
-		this.manualType = Type.manual(topic);
-		this.provisionalType = Type.provisional(topic);
-		this.authoredType = Type.authored(topic);
-		this.onceAuthoredType = Type.onceAuthored(topic);
+		this.manualType = manual(topic);
+		this.provisionalType = provisional(topic);
+		this.authoredType = authored(topic);
+		this.onceAuthoredType = onceAuthored(topic);
+		this.rankedType = ranked();
 	}
 
 	public boolean isManual(Relationship r) {
@@ -78,11 +58,11 @@ public class RelationshipFilter {
 	}
 
 	public boolean isRanked(Relationship r) {
-										  return r.isType(RANKED_TYPE);
+										  return r.isType(rankedType);
 																	   }
 
 	public RelationshipType getRankedType() {
-										  return RANKED_TYPE;
+										  return rankedType;
 															 }
 
 	public Iterable<Relationship> getAllIncoming(Node n) {
@@ -133,4 +113,5 @@ public class RelationshipFilter {
 	private Iterable<Relationship> getAll(Node n, Direction d) {
 			return n.getRelationships(d, getManualType(), getProvisionalType(), getRankedType());
 		}
+
 }
