@@ -3,11 +3,14 @@ package outlikealambda.traversal;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import outlikealambda.utils.Optionals;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -47,20 +50,28 @@ public class ConnectivityAdjuster {
 	}
 
 	public void clearTarget(Node source) {
-		changeTarget(source, null);
+		changeTarget(source, null, null);
 	}
 
 	public void setTarget(Node source, Node target) {
-		changeTarget(source, target);
+		changeTarget(source, target, Collections.singletonList(rf.getManualType()));
 	}
 
-	private void changeTarget(Node source, Node t) {
+	public void setOpinion(Node source, Node opinion) {
+		changeTarget(source, opinion, Arrays.asList(rf.getAuthoredType(), rf.getOnceAuthoredType()));
+	}
+
+	private void changeTarget(Node source, Node t, List<RelationshipType> relationshipTypes) {
 		boolean wasConnected = isConnected(source);
 
 		// Delete the existing outgoing relationship if it exists
 		// Could be either manual or provisioned
 		rf.getTargetedOutgoing(source)
 				.ifPresent(Relationship::delete);
+
+		rf.getAuthored(source)
+				.ifPresent(Relationship::delete);
+
 
 		// create a new relationship to:
 		// 1. manually specified node
@@ -69,8 +80,8 @@ public class ConnectivityAdjuster {
 		Optionals.ifElse(
 				Optional.ofNullable(t),
 
-				// create manual if parameter exists
-				target -> source.createRelationshipTo(target, rf.getManualType()),
+				// create relationships if target exists
+				target -> relationshipTypes.forEach(rType -> source.createRelationshipTo(target, rType)),
 
 				// try to create a provisional relationship
 				() -> getProvisionalTarget(source)

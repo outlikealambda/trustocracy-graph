@@ -14,6 +14,7 @@ public class RelationshipFilter {
 	private static final String MANUAL = "MANUAL";
 	private static final String PROVISIONAL = "PROVISIONAL";
 	private static final String AUTHORED = "AUTHORED";
+	private static final String ONCE_AUTHORED = "ONCE_AUTHORED";
 	private static final String RANKED = "RANKED";
 	private static final RelationshipType RANKED_TYPE = RelationshipType.withName(RANKED);
 
@@ -30,6 +31,10 @@ public class RelationshipFilter {
 			return combineTypeAndId(AUTHORED, topic);
 		}
 
+		private static RelationshipType onceAuthored(long topic) {
+			return combineTypeAndId(ONCE_AUTHORED, topic);
+		}
+
 		private static RelationshipType combineTypeAndId(String s, long id) {
 			return RelationshipType.withName(s + "_" + id);
 		}
@@ -38,11 +43,13 @@ public class RelationshipFilter {
 	private final RelationshipType manualType;
 	private final RelationshipType provisionalType;
 	private final RelationshipType authoredType;
+	private final RelationshipType onceAuthoredType;
 
 	public RelationshipFilter(long topic) {
 		this.manualType = Type.manual(topic);
 		this.provisionalType = Type.provisional(topic);
 		this.authoredType = Type.authored(topic);
+		this.onceAuthoredType = Type.onceAuthored(topic);
 	}
 
 	public boolean isManual(Relationship r) {
@@ -63,6 +70,11 @@ public class RelationshipFilter {
 
 	public RelationshipType getAuthoredType() {
 		return authoredType;
+	}
+
+	// for keeping track of older opinions
+	public RelationshipType getOnceAuthoredType() {
+		return onceAuthoredType;
 	}
 
 	public boolean isRanked(Relationship r) {
@@ -89,6 +101,10 @@ public class RelationshipFilter {
 		return atMostOneOf(getTargeted(n, Direction.OUTGOING), "targeted outgoing connection");
 	}
 
+	public Optional<Relationship> getAuthored(Node n) {
+		return atMostOneOf(n.getRelationships(Direction.OUTGOING, getAuthoredType()), "authored relationship");
+	}
+
 	public static Comparator<Relationship> rankComparator =
 			(left, right) -> getRank(left) < getRank(right) ? -1 : 1;
 
@@ -102,7 +118,7 @@ public class RelationshipFilter {
 		things.forEach(list::add);
 
 		if (list.size() > 1) {
-			throw new IllegalStateException(String.format("Can only have a %s per topic", description));
+			throw new IllegalStateException(String.format("Can only have one %s per topic", description));
 		} else if (list.size() == 1) {
 			return Optional.of(list.get(0));
 		} else {

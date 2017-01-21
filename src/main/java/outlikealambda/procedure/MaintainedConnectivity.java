@@ -25,6 +25,9 @@ public class MaintainedConnectivity {
 	private static final Label PERSON_LABEL = Label.label("Person");
 	private static final String PERSON_ID = "id";
 
+	private static final Label OPINION_LABEL = Label.label("Opinion");
+	private static final String OPINION_ID = "id";
+
 	@Context
 	public GraphDatabaseService gdb;
 
@@ -114,5 +117,33 @@ public class MaintainedConnectivity {
 		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, userId);
 
 		return Stream.of(adjuster.calculateInfluence(user));
+	}
+
+	@Procedure("opinion.set")
+	public void setOpinion(
+			@Name("userId") long userId,
+			@Name("opinionId") long opinionId,
+			@Name("topicId") long topicId
+	) {
+		RelationshipFilter rf = new RelationshipFilter(topicId);
+		ConnectivityAdjuster adjuster = new ConnectivityAdjuster(rf);
+
+		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, userId);
+		Node opinion = gdb.findNode(OPINION_LABEL, OPINION_ID, opinionId);
+
+		adjuster.setOpinion(user, opinion);
+	}
+
+	@Procedure("opinion.clear")
+	public void clearOpinion(
+			@Name("userId") long userId,
+			@Name("topicId") long topicId
+	) {
+		RelationshipFilter rf = new RelationshipFilter(topicId);
+		ConnectivityAdjuster adjuster = new ConnectivityAdjuster(rf);
+
+		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, userId);
+
+		adjuster.clearTarget(user);
 	}
 }
