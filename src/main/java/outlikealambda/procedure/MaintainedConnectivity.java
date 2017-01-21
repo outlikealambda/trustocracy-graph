@@ -9,7 +9,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
-import outlikealambda.model.TraversalResult;
+import outlikealambda.output.TraversalResult;
 import outlikealambda.traversal.ConnectivityAdjuster;
 import outlikealambda.traversal.RelationshipFilter;
 
