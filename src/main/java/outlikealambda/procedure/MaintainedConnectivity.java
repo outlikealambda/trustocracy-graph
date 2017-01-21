@@ -8,6 +8,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.PerformsWrites;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.output.Influence;
 import outlikealambda.output.TraversalResult;
@@ -80,6 +81,7 @@ public class MaintainedConnectivity {
 	}
 
 	@Procedure("target.set")
+	@PerformsWrites
 	public void setTarget(
 			@Name("userId") long userId,
 			@Name("targetId") long targetId,
@@ -95,6 +97,7 @@ public class MaintainedConnectivity {
 	}
 
 	@Procedure("target.clear")
+	@PerformsWrites
 	public void clearTarget(
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
@@ -122,6 +125,7 @@ public class MaintainedConnectivity {
 	}
 
 	@Procedure("opinion.set")
+	@PerformsWrites
 	public void setOpinion(
 			@Name("userId") long userId,
 			@Name("opinionId") long opinionId,
@@ -137,6 +141,7 @@ public class MaintainedConnectivity {
 	}
 
 	@Procedure("opinion.clear")
+	@PerformsWrites
 	public void clearOpinion(
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
