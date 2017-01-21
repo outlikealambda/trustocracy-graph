@@ -9,6 +9,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
+import outlikealambda.output.Influence;
 import outlikealambda.output.TraversalResult;
 import outlikealambda.traversal.ConnectivityAdjuster;
 import outlikealambda.traversal.RelationshipFilter;
@@ -107,7 +108,7 @@ public class MaintainedConnectivity {
 	}
 
 	@Procedure("influence")
-	public Stream<Integer> calculateInfluence(
+	public Stream<Influence> calculateInfluence(
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
 	) {
@@ -116,7 +117,8 @@ public class MaintainedConnectivity {
 
 		Node user = gdb.findNode(PERSON_LABEL, PERSON_ID, userId);
 
-		return Stream.of(adjuster.calculateInfluence(user));
+		return Stream.of(adjuster.calculateInfluence(user))
+				.map(Influence::new);
 	}
 
 	@Procedure("opinion.set")
