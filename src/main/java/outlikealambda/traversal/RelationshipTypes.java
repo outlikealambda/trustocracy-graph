@@ -8,6 +8,8 @@ public final class RelationshipTypes {
 	private static final String AUTHORED = "AUTHORED";
 	private static final String ONCE_AUTHORED = "ONCE_AUTHORED";
 	private static final String RANKED = "RANKED";
+	private static final String CONNECTED = "CONNECTED";
+
 	private static final RelationshipType RANKED_TYPE = RelationshipType.withName(RANKED);
 
 	static RelationshipType manual(long topic) {
@@ -24,6 +26,10 @@ public final class RelationshipTypes {
 
 	static RelationshipType onceAuthored(long topic) {
 		return combineTypeAndId(ONCE_AUTHORED, topic);
+	}
+
+	static RelationshipType connected(long topic) {
+		return combineTypeAndId(CONNECTED, topic);
 	}
 
 	static RelationshipType ranked() {
