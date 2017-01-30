@@ -12,7 +12,7 @@ public final class RelationshipTypes {
 
 	private static final RelationshipType RANKED_TYPE = RelationshipType.withName(RANKED);
 
-	static RelationshipType manual(long topic) {
+	public static RelationshipType manual(long topic) {
 		return combineTypeAndId(MANUAL, topic);
 	}
 
@@ -20,7 +20,7 @@ public final class RelationshipTypes {
 		return combineTypeAndId(PROVISIONAL, topic);
 	}
 
-	static RelationshipType authored(long topic) {
+	public static RelationshipType authored(long topic) {
 		return combineTypeAndId(AUTHORED, topic);
 	}
 
@@ -28,11 +28,11 @@ public final class RelationshipTypes {
 		return combineTypeAndId(ONCE_AUTHORED, topic);
 	}
 
-	static RelationshipType connected(long topic) {
+	public static RelationshipType connected(long topic) {
 		return combineTypeAndId(CONNECTED, topic);
 	}
 
-	static RelationshipType ranked() {
+	public static RelationshipType ranked() {
 		return RANKED_TYPE;
 	}
 

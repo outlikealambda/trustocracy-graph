@@ -1,4 +1,4 @@
-package outlikealambda.traversal;
+package outlikealambda.traversal.walk;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Node;
