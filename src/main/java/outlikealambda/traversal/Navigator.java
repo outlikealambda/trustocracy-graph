@@ -7,8 +7,9 @@ import org.neo4j.graphdb.RelationshipType;
 import outlikealambda.utils.Optionals;
 
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Stream;
+
+import static outlikealambda.traversal.TraversalUtils.getSingleOut;
 
 /**
  * Reads and modifies the connections between nodes in a blaze-based
@@ -79,13 +80,5 @@ public class Navigator {
 
 	public Optional<Relationship> getConnected(Node n) {
 		return Optional.of(n).map(getSingleOut(connectedType));
-	}
-
-	private static Function<Node, Relationship> getSingleOut(RelationshipType rt) {
-		return getSingle(rt, Direction.OUTGOING);
-	}
-
-	private static Function<Node, Relationship> getSingle(RelationshipType rt, Direction d) {
-		return n -> n.getSingleRelationship(rt, d);
 	}
 }
