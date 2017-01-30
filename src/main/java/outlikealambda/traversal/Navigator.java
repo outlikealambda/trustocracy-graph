@@ -5,14 +5,15 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import outlikealambda.utils.Optionals;
+import outlikealambda.utils.Traversals;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static outlikealambda.traversal.TraversalUtils.getSingleOut;
+import static outlikealambda.utils.Traversals.getSingleOut;
 
 /**
- * Reads and modifies the connections between nodes in a blaze-based
+ * Reads and modifies the connections between nodes in a walk-based
  * graph
  */
 public class Navigator {
@@ -37,7 +38,6 @@ public class Navigator {
 		return n.hasProperty("disjoint");
 	}
 
-
 	public boolean isAuthor(Node n) {
 		return n.hasRelationship(authoredType, Direction.OUTGOING);
 	}
@@ -61,6 +61,13 @@ public class Navigator {
 		n.setProperty("disjoint", true);
 	}
 
+	public Relationship getConnectionOut(Node n) {
+		return Traversals.first(n,
+				Stream.of(getSingleOut(connectedType), getSingleOut(manualType)))
+				.orElseThrow(() -> new IllegalArgumentException(
+						"getConnectionOut must have a connection"
+				));
+	}
 
 	public Stream<Relationship> getWalkableOutgoing(Node n) {
 		return Optional.of(n)
@@ -69,16 +76,14 @@ public class Navigator {
 				.orElseGet(() -> getRankedByRank(n));
 	}
 
+	public Stream<Relationship> getRankedAndManualIncoming(Node n) {
+		return Traversals.goStream(n.getRelationships(Direction.INCOMING, manualType, rankedType));
+	}
+
 	private Stream<Relationship> getRankedByRank(Node n) {
-		return TraversalUtils.goStream(n.getRelationships(rankedType, Direction.OUTGOING))
+		return Traversals.goStream(n.getRelationships(rankedType, Direction.OUTGOING))
 				.sorted(RelationshipFilter.rankComparator);
 	}
 
-	public Stream<Relationship> getRankedAndManualIncoming(Node n) {
-		return TraversalUtils.goStream(n.getRelationships(Direction.INCOMING, manualType, rankedType));
-	}
 
-	public Optional<Relationship> getConnected(Node n) {
-		return Optional.of(n).map(getSingleOut(connectedType));
-	}
 }

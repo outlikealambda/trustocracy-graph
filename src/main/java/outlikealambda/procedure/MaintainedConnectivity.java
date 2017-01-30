@@ -21,7 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
-import static outlikealambda.traversal.TraversalUtils.goStream;
+import static outlikealambda.utils.Traversals.goStream;
 
 public class MaintainedConnectivity {
 	private static final Label PERSON_LABEL = Label.label("Person");

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import outlikealambda.utils.Optionals;
+import outlikealambda.utils.Traversals;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;

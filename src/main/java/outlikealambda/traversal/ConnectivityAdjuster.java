@@ -5,6 +5,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import outlikealambda.utils.Optionals;
+import outlikealambda.utils.Traversals;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class ConnectivityAdjuster {
 	}
 
 	public int calculateInfluence(Node target) {
-		return TraversalUtils.goStream(rf.getTargetedIncoming(target))
+		return Traversals.goStream(rf.getTargetedIncoming(target))
 				.map(Relationship::getStartNode)
 				.map(this::calculateInfluence)
 				.reduce(1, (total, perSourceTotal) -> total + perSourceTotal);
@@ -183,7 +184,7 @@ public class ConnectivityAdjuster {
 	}
 
 	Optional<Node> getProvisionalTarget(Node n) {
-		return TraversalUtils.goStream(n.getRelationships(Direction.OUTGOING, rf.getRankedType()))
+		return Traversals.goStream(n.getRelationships(Direction.OUTGOING, rf.getRankedType()))
 				.sorted(RelationshipFilter.rankComparator)
 				.map(Relationship::getEndNode)
 				.filter(this::isConnected)
@@ -265,7 +266,7 @@ public class ConnectivityAdjuster {
 	private void flipCyclicIncoming(Collection<Node> cycle) {
 		cycle.stream()
 				.map(rf::getTargetedIncoming)
-				.flatMap(TraversalUtils::goStream)
+				.flatMap(Traversals::goStream)
 				// skip any remaining manual relationships between the nodes in the cycle
 				.filter(r -> !cycle.contains(r.getStartNode()))
 				.forEach(this::flipLostConnection);

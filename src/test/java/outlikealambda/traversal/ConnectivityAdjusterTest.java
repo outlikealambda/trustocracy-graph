@@ -7,6 +7,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
+import outlikealambda.utils.Traversals;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -580,7 +581,7 @@ public class ConnectivityAdjusterTest {
 			startNode.getRelationships(Direction.INCOMING)
 					.forEach(r -> adjuster.flipLostConnection(r));
 
-			long targetedIncoming = TraversalUtils.goStream(rf.getTargetedIncoming(startNode)).count();
+			long targetedIncoming = Traversals.goStream(rf.getTargetedIncoming(startNode)).count();
 
 			// nothing really happens, because only ranked incoming
 			assertEquals(0, targetedIncoming);
@@ -612,7 +613,7 @@ public class ConnectivityAdjusterTest {
 			startNode.getRelationships(Direction.INCOMING)
 					.forEach(r -> adjuster.flipLostConnection(r));
 
-			long targetedIncoming = TraversalUtils.goStream(rf.getTargetedIncoming(startNode)).count();
+			long targetedIncoming = Traversals.goStream(rf.getTargetedIncoming(startNode)).count();
 
 			// incoming manual connections should remain unchanged
 			assertEquals(1, targetedIncoming);
@@ -647,7 +648,7 @@ public class ConnectivityAdjusterTest {
 			startNode.getRelationships(Direction.INCOMING)
 					.forEach(r -> adjuster.flipLostConnection(r));
 
-			long targetedIncoming = TraversalUtils.goStream(rf.getTargetedIncoming(startNode)).count();
+			long targetedIncoming = Traversals.goStream(rf.getTargetedIncoming(startNode)).count();
 
 			// incoming provisional connections should disappear
 			assertEquals(0, targetedIncoming);

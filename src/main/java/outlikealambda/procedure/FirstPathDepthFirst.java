@@ -12,7 +12,7 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.output.TraversalResult;
 import outlikealambda.traversal.RelationshipFilter;
-import outlikealambda.traversal.TraversalUtils;
+import outlikealambda.utils.Traversals;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 import static org.neo4j.function.Predicates.not;
-import static outlikealambda.traversal.TraversalUtils.goStream;
+import static outlikealambda.utils.Traversals.goStream;
 
 public class FirstPathDepthFirst {
 	private static final Label PERSON_LABEL = Label.label("Person");
@@ -59,7 +59,7 @@ public class FirstPathDepthFirst {
 		Map<Node, Node> authorOpinions = goStream(topic.getRelationships(Direction.INCOMING, ADDRESSES))
 				.map(Relationship::getStartNode)
 				.map(opinion -> opinion.getRelationships(Direction.INCOMING, OPINES))
-				.flatMap(TraversalUtils::goStream)
+				.flatMap(Traversals::goStream)
 				.collect(toMap(Relationship::getStartNode, Relationship::getEndNode));
 
 		Node start = db.findNode(PERSON_LABEL, "id", personId);
