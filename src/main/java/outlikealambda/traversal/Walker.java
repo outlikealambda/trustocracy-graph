@@ -25,26 +25,34 @@ import java.util.Optional;
  *
  */
 public class Walker {
-	private final WalkerFilter wf;
+	private final Navigator navigator;
 	private final HashSet<Node> visited = new HashSet<>();
 
-	public Walker(WalkerFilter wf) {
-		this.wf = wf;
+	public Walker(Navigator navigator) {
+		this.navigator = navigator;
 	}
 
-	public WalkResult walk(Node source) {
+	/**
+	 * "blazing a path"
+	 *
+	 * walk a path until the end, updating all unmarked nodes
+	 *
+	 * @param source
+	 * @return
+	 */
+	public WalkResult blaze(Node source) {
 		// Already visited
-		if (wf.isConnected(source)) {
+		if (navigator.isConnected(source)) {
 			return new WalkResult(true);
 		}
 
 		// Already visited
-		if (wf.isDisjoint(source)) {
+		if (navigator.isDisjoint(source)) {
 			return new WalkResult(false);
 		}
 
 		// Author
-		if (wf.isAuthor(source)) {
+		if (navigator.isAuthor(source)) {
 			return new WalkResult(true);
 		}
 
@@ -66,9 +74,9 @@ public class Walker {
 		//    and need to mark ourselves as such and let the previous node know (unless we are
 		//    the cycle end)
 		// 3. We've checked all our outgoing connections, with no success.  That means we're disjoint
-		Optional<Pair<Node, WalkResult>> targetWalkResult = wf.getWalkableOutgoing(source)
+		Optional<Pair<Node, WalkResult>> targetWalkResult = navigator.getWalkableOutgoing(source)
 				.map(Relationship::getEndNode)
-				.map(target -> Pair.of(target, walk(target)))
+				.map(target -> Pair.of(target, blaze(target)))
 				.filter(pair ->
 						pair.getRight().isConnected() || pair.getRight().getCycleEnd().isPresent())
 				.findFirst();
@@ -83,14 +91,14 @@ public class Walker {
 					WalkResult walkResult = twr.getRight();
 
 					if (walkResult.isConnected()) {
-						wf.setConnected(source, target);
+						navigator.setConnected(source, target);
 
 						// pass through
 						return walkResult;
 					} else {
 						// We have a non-connected result, that didn't get filtered;
 						// must be a cycle
-						wf.setDisjoint(source);
+						navigator.setDisjoint(source);
 
 						// IFF it's the cycle source, we've reached the end of the cycle,
 						// and can remove it from the WalkResult
@@ -104,7 +112,7 @@ public class Walker {
 				() -> {
 					// all of the outgoing targets were disjoint, so we ourselves
 					// are disjoint
-					wf.setDisjoint(source);
+					navigator.setDisjoint(source);
 					return new WalkResult(false);
 				}
 		);
@@ -115,7 +123,7 @@ public class Walker {
 	 * Collects all upstream nodes, clearing their connection state (connected/disjoint)
 	 * as it finds them.
 	 */
-	public static LinkedHashSet<Node> collectClearedUpstream(Node start, WalkerFilter wf) {
+	public static LinkedHashSet<Node> collectClearedUpstream(Node start, Navigator wf) {
 		LinkedHashSet<Node> upstream = new LinkedHashSet<>();
 		LinkedList<Node> queue = new LinkedList<>();
 
