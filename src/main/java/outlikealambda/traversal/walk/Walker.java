@@ -143,7 +143,7 @@ public class Walker {
 	 * Collects all upstream nodes, clearing their connection state (connected/disjoint)
 	 * as it finds them.
 	 */
-	public static LinkedHashSet<Node> collectClearedUpstream(Node start, Navigator wf) {
+	public LinkedHashSet<Node> collectClearedUpstream(Node start) {
 		LinkedHashSet<Node> upstream = new LinkedHashSet<>();
 		LinkedList<Node> queue = new LinkedList<>();
 
@@ -154,14 +154,15 @@ public class Walker {
 		while(!queue.isEmpty()) {
 			current = queue.pop();
 
+			// go to next node in queue if we've already visited
 			if (!upstream.contains(current)) {
 
 				// remove any connected/disjoint state
-				wf.cleanState(current);
+				navigator.cleanState(current);
 
 				upstream.add(current);
 
-				wf.getRankedAndManualIncoming(current)
+				navigator.getRankedAndManualIncoming(current)
 						.map(Relationship::getStartNode)
 						.forEach(queue::add);
 			}
