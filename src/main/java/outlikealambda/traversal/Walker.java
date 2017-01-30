@@ -34,6 +34,25 @@ public class Walker {
 	}
 
 	/**
+	 * finds the author for a given connected node.
+	 *
+	 * throws an IllegalArgumentException if node is not connected
+	 *
+	 * @param source
+	 * @return
+	 */
+	public Node follow(Node source) {
+		if (navigator.isAuthor(source)) {
+			return source;
+		}
+
+		return Traversals.asFunction(navigator::getConnectionOut)
+				.andThen(Relationship::getEndNode)
+				.andThen(this::follow)
+				.apply(source);
+	}
+
+	/**
 	 * "blazing a path"
 	 *
 	 * walk a path until the end, updating all unmarked nodes
