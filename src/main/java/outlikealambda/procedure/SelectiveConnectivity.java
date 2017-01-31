@@ -33,7 +33,7 @@ public class SelectiveConnectivity {
 	@Context
 	public GraphDatabaseService gdb;
 
-	@Procedure("friend.author.opinion")
+	@Procedure("selective.friend.author.opinion")
 	public Stream<TraversalResult> traverse(
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
@@ -80,7 +80,7 @@ public class SelectiveConnectivity {
 		return TraversalResult.mergeIntoTraversalResults(adjacentLinks, adjacentAuthors, authorOpinions, topicTarget);
 	}
 
-	@Procedure("target.set")
+	@Procedure("selective.target.set")
 	@PerformsWrites
 	public void setTarget(
 			@Name("userId") long userId,
@@ -96,7 +96,7 @@ public class SelectiveConnectivity {
 		adjuster.setTarget(user, target);
 	}
 
-	@Procedure("target.clear")
+	@Procedure("selective.target.clear")
 	@PerformsWrites
 	public void clearTarget(
 			@Name("userId") long userId,
@@ -110,7 +110,7 @@ public class SelectiveConnectivity {
 		adjuster.clearTarget(user);
 	}
 
-	@Procedure("influence")
+	@Procedure("selective.influence")
 	public Stream<Influence> calculateInfluence(
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
@@ -124,7 +124,7 @@ public class SelectiveConnectivity {
 				.map(Influence::new);
 	}
 
-	@Procedure("opinion.set")
+	@Procedure("selective.opinion.set")
 	@PerformsWrites
 	public void setOpinion(
 			@Name("userId") long userId,
@@ -140,7 +140,7 @@ public class SelectiveConnectivity {
 		adjuster.setOpinion(user, opinion);
 	}
 
-	@Procedure("opinion.clear")
+	@Procedure("selective.opinion.clear")
 	@PerformsWrites
 	public void clearOpinion(
 			@Name("userId") long userId,
