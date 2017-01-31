@@ -55,9 +55,29 @@ public class Walker {
 	/**
 	 * unwinds, and then blazes starting from all unwound nodes
 	 */
-	public void updateFromNode(Node origin) {
+	public void updateConnectivity(Node origin) {
 		unwindUpstream(origin)
 				.forEach(this::blaze);
+	}
+
+	public void setTarget(Node source, Node target) {
+		navigator.setTarget(source, target);
+		updateConnectivity(source);
+	}
+
+	public void clearTarget(Node source) {
+		setTarget(source, null);
+		updateConnectivity(source);
+	}
+
+	public void setOpinion(Node author, Node opinion) {
+		navigator.setOpinion(author, opinion);
+		updateConnectivity(author);
+	}
+
+	public void clearOpinion(Node author) {
+		navigator.setOpinion(author, null);
+		updateConnectivity(author);
 	}
 
 	/**
@@ -171,7 +191,7 @@ public class Walker {
 
 				upstream.add(current);
 
-				navigator.getRankedAndManualIncoming(current)
+				navigator.getRankedAndManualIn(current)
 						.map(Relationship::getStartNode)
 						.forEach(queue::add);
 			}
