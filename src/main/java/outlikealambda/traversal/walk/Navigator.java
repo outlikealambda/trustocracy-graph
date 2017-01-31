@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static outlikealambda.utils.Traversals.getSingleOut;
+import static outlikealambda.utils.Traversals.goStream;
 
 /**
  * Reads and modifies the connections between nodes in a walk-based
@@ -44,6 +45,13 @@ public class Navigator {
 		return n.hasRelationship(authoredType, Direction.OUTGOING);
 	}
 
+	public Node getOpinion(Node author) {
+		return Optional.of(author)
+				.map(getSingleOut(authoredType))
+				.map(Relationship::getEndNode)
+				.orElseThrow(() -> new IllegalArgumentException("Don't call getOpinion unless you're sure you have an author"));
+	}
+
 	// TODO: optimize
 	// Is there a way to avoid setting/removing a property on each node?
 	//
@@ -63,12 +71,40 @@ public class Navigator {
 		n.setProperty("disjoint", true);
 	}
 
+	public void setTarget(Node source, Node target) {
+		clearAndLinkOut(source, target, manualType);
+	}
+
+	public void setOpinion(Node author, Node opinion) {
+		clearAndLinkOut(author, opinion, authoredType);
+	}
+
+	private void clearAndLinkOut(Node source, Node target, RelationshipType rt) {
+		clearRelationshipOut(source, rt);
+		setRelationshipOut(source, target, rt);
+	}
+
+	private void clearRelationshipOut(Node source, RelationshipType rt) {
+		Optional.of(source)
+				.map(getSingleOut(rt))
+				.ifPresent(Relationship::delete);
+	}
+
+	private void setRelationshipOut(Node source, Node target, RelationshipType rt) {
+		Optional.ofNullable(target)
+				.ifPresent(t -> source.createRelationshipTo(t, rt));
+	}
+
 	public Relationship getConnectionOut(Node n) {
 		return Traversals.first(n,
 				Stream.of(getSingleOut(connectedType), getSingleOut(manualType)))
 				.orElseThrow(() -> new IllegalArgumentException(
 						"getConnectionOut must have a connection"
 				));
+	}
+
+	public Stream<Relationship> getRankedAndManualOut(Node n) {
+		return goStream(n.getRelationships(Direction.OUTGOING, rankedType, manualType));
 	}
 
 	public Stream<Relationship> getWalkableOutgoing(Node n) {
@@ -78,12 +114,12 @@ public class Navigator {
 				.orElseGet(() -> getRankedByRank(n));
 	}
 
-	public Stream<Relationship> getRankedAndManualIncoming(Node n) {
-		return Traversals.goStream(n.getRelationships(Direction.INCOMING, manualType, rankedType));
+	public Stream<Relationship> getRankedAndManualIn(Node n) {
+		return goStream(n.getRelationships(Direction.INCOMING, manualType, rankedType));
 	}
 
 	private Stream<Relationship> getRankedByRank(Node n) {
-		return Traversals.goStream(n.getRelationships(rankedType, Direction.OUTGOING))
+		return goStream(n.getRelationships(rankedType, Direction.OUTGOING))
 				.sorted(RelationshipFilter.rankComparator);
 	}
 
