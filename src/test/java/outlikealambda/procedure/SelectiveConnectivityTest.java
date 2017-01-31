@@ -19,10 +19,10 @@ import static outlikealambda.traversal.TestUtils.containsFriendAuthorNameCombo;
 import static outlikealambda.traversal.TestUtils.containsFriendWithoutAuthor;
 import static outlikealambda.traversal.TestUtils.friendIsInfluencer;
 
-public class MaintainedConnectivityTest {
+public class SelectiveConnectivityTest {
 	@ClassRule
 	public static Neo4jRule neo4j = new Neo4jRule()
-			.withProcedure(MaintainedConnectivity.class);
+			.withProcedure(SelectiveConnectivity.class);
 
 	@Test
 	public void friendAuthorOpinion() {

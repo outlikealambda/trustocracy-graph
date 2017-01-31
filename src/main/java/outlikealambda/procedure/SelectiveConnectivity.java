@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toMap;
 import static outlikealambda.utils.Traversals.goStream;
 
-public class MaintainedConnectivity {
+public class SelectiveConnectivity {
 	private static final Label PERSON_LABEL = Label.label("Person");
 	private static final String PERSON_ID = "id";
 
