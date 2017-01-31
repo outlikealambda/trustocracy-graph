@@ -53,6 +53,14 @@ public class Walker {
 	}
 
 	/**
+	 * unwinds, and then blazes starting from all unwound nodes
+	 */
+	public void updateFromNode(Node origin) {
+		unwindUpstream(origin)
+				.forEach(this::blaze);
+	}
+
+	/**
 	 * "blazing a path"
 	 *
 	 * walk a path until the end, updating all unmarked nodes
@@ -60,7 +68,7 @@ public class Walker {
 	 * @param source
 	 * @return
 	 */
-	public WalkResult blaze(Node source) {
+	WalkResult blaze(Node source) {
 		// Already visited
 		if (navigator.isConnected(source)) {
 			return new WalkResult(true);
@@ -139,11 +147,12 @@ public class Walker {
 
 	}
 
-	/* Breadth first seems reasonable -- leaves the furthest upstream for last.
+	/**
+	 * Breadth first seems reasonable -- leaves the furthest upstream for last.
 	 * Collects all upstream nodes, clearing their connection state (connected/disjoint)
 	 * as it finds them.
 	 */
-	public LinkedHashSet<Node> collectClearedUpstream(Node start) {
+	LinkedHashSet<Node> unwindUpstream(Node start) {
 		LinkedHashSet<Node> upstream = new LinkedHashSet<>();
 		LinkedList<Node> queue = new LinkedList<>();
 
