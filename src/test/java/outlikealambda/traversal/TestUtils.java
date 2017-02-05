@@ -88,6 +88,16 @@ public class TestUtils {
 			return "CREATE" + creates.stream().collect(Collectors.joining(","));
 		}
 
+		public Walkable addPersonIdOnly(int id) {
+			creates.add(String.format("(p"+id+":Person {id:%d})", id));
+			return this;
+		}
+
+		public Walkable addOpinionIdOnly(int id) {
+			creates.add(String.format("(o"+id+":Opinion {id:%d})", id));
+			return this;
+		}
+
 		public Walkable addPerson(String person, int id) {
 			creates.add(String.format("(%s:Person {name:'%s', id:%d})", person, person, id));
 			return this;
@@ -120,6 +130,11 @@ public class TestUtils {
 
 		public Walkable connectConnected(String source, String target) {
 			creates.add(connect(source, target, RelationshipTypes.connected(topicId).name()));
+			return this;
+		}
+
+		public Walkable connectRankedById(int source, int target, int rank) {
+			creates.add(connect("p"+source, "p"+target, String.format("RANKED {rank:%d}", rank)));
 			return this;
 		}
 

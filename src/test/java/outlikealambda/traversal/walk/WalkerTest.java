@@ -322,11 +322,8 @@ public class WalkerTest {
 		}
 	}
 
-	/**
-	 * this is non-deterministic with the ConnectivityAdjuster
-	 */
 	@Test
-	public void unwindAndBlaze() {
+	public void unwindAndBlaze1() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String klb = "klb";
 			String mb = "mb";
@@ -389,7 +386,78 @@ public class WalkerTest {
 		}
 	}
 
+	/**
+	 * this is non-deterministic with the ConnectivityAdjuster
+	 */
+	@Test
+	public void unwindAndBlaze2() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String ws = "ws";
+			String cd = "cd";
+			String sl = "sl";
+			String gf = "gf";
+			String cr = "cr";
+			String o = "opinion";
+
+			String create = TestUtils.createWalkable(topicId)
+					.addPerson(ws, 1)
+					.addPerson(cd, 2)
+					.addPerson(sl, 3)
+					.addPerson(gf, 4)
+					.addPerson(cr, 5)
+					.addOpinion(o, 0)
+					.connectAuthored(ws, o)
+					.connectRanked(ws, cr, 0)
+					.connectRanked(ws, sl, 1)
+					.connectRanked(cd, sl, 0)
+					.connectRanked(cd, ws, 1)
+					.connectRanked(sl, ws, 0)
+					.connectRanked(sl, cd, 1)
+					.connectRanked(gf, sl, 0)
+					.connectRanked(gf, cr, 1)
+					.connectRanked(cr, ws, 0)
+					.connectRanked(cr, sl, 1)
+					.build();
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node wsNode = getPerson(1);
+			Node cdNode = getPerson(2);
+			Node slNode = getPerson(3);
+			Node gfNode = getPerson(4);
+			Node crNode = getPerson(5);
+			Node o2Node = getOpinion(1);
+
+			// Should attempt to go through c, which should cycle and mark all nodes
+			// as disjoint.
+			// Should then attempt z, which should succeed
+			Set<Node> unwound = fixture.unwindUpstream(wsNode);
+
+			assertTrue(unwound.contains(wsNode));
+			assertTrue(unwound.contains(cdNode));
+			assertTrue(unwound.contains(slNode));
+			assertTrue(unwound.contains(gfNode));
+			assertTrue(unwound.contains(crNode));
+
+			unwound.forEach(fixture::blaze);
+
+			assertEquals(wsNode, fixture.follow(wsNode));
+			assertEquals(wsNode, fixture.follow(cdNode));
+			assertEquals(wsNode, fixture.follow(slNode));
+			assertEquals(wsNode, fixture.follow(gfNode));
+			assertEquals(wsNode, fixture.follow(crNode));
+
+			fixture.setOpinion(slNode, o2Node);
+
+			tx.failure();
+		}
+	}
+
 	private Node getPerson(int id) {
 		return neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", id);
+	}
+
+	private Node getOpinion(int id) {
+		return neo4j.getGraphDatabaseService().findNode(Label.label("Opinion"), "id", id);
 	}
 }
