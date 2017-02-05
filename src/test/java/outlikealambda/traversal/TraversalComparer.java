@@ -8,6 +8,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
+import outlikealambda.traversal.unwind.BasicUnwinder;
 import outlikealambda.traversal.walk.Navigator;
 import outlikealambda.traversal.walk.Walker;
 
@@ -30,6 +31,12 @@ public class TraversalComparer {
 	private static int topicId = 64;
 
 	private static Navigator nav = new Navigator(topicId);
+
+	private static ConnectivityManager fixture = new ConnectivityManager(
+			nav,
+			new Walker(nav),
+			new BasicUnwinder(nav)
+	);
 
 	@Test
 	public void forwardWalkIsDeterministic() {
@@ -68,7 +75,7 @@ public class TraversalComparer {
 
 			System.out.println("Initial Pass");
 			authorOpinions
-					.forEach(ao -> new Walker(nav).setOpinion(ao.getLeft(), ao.getRight()));
+					.forEach(ao -> fixture.setOpinion(ao.getLeft(), ao.getRight()));
 
 			Map<Node, Node> baseConnectionMap = getConnectionMap();
 
@@ -88,7 +95,7 @@ public class TraversalComparer {
 				System.out.println("shuffle #" + (passes + 1));
 
 				authorOpinions
-						.forEach(ao -> new Walker(nav).setOpinion(ao.getLeft(), ao.getRight()));
+						.forEach(ao -> fixture.setOpinion(ao.getLeft(), ao.getRight()));
 
 				Map<Node, Node> shuffledInsert = getConnectionMap();
 

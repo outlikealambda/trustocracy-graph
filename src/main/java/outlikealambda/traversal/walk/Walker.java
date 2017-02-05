@@ -7,8 +7,6 @@ import outlikealambda.utils.Optionals;
 import outlikealambda.utils.Traversals;
 
 import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.Optional;
 
 /**
@@ -37,9 +35,6 @@ public class Walker {
 	 * finds the author for a given connected node.
 	 *
 	 * throws an IllegalArgumentException if node is not connected
-	 *
-	 * @param source
-	 * @return
 	 */
 	public Node follow(Node source) {
 		if (navigator.isAuthor(source)) {
@@ -56,37 +51,15 @@ public class Walker {
 	 * unwinds, and then blazes starting from all unwound nodes
 	 */
 	public void updateConnectivity(Node origin) {
-		unwindUpstream(origin)
-				.forEach(this::blaze);
-	}
+		visited.clear();
 
-	public void setTarget(Node source, Node target) {
-		navigator.setTarget(source, target);
-		updateConnectivity(source);
-	}
-
-	public void clearTarget(Node source) {
-		setTarget(source, null);
-		updateConnectivity(source);
-	}
-
-	public void setOpinion(Node author, Node opinion) {
-		navigator.setOpinion(author, opinion);
-		updateConnectivity(author);
-	}
-
-	public void clearOpinion(Node author) {
-		navigator.setOpinion(author, null);
-		updateConnectivity(author);
+		blaze(origin);
 	}
 
 	/**
 	 * "blazing a path"
 	 *
 	 * walk a path until the end, updating all unmarked nodes
-	 *
-	 * @param source
-	 * @return
 	 */
 	WalkResult blaze(Node source) {
 		// Already visited
@@ -167,57 +140,25 @@ public class Walker {
 
 	}
 
-	/**
-	 * Breadth first seems reasonable -- leaves the furthest upstream for last.
-	 * Collects all upstream nodes, clearing their connection state (connected/disjoint)
-	 * as it finds them.
-	 */
-	LinkedHashSet<Node> unwindUpstream(Node start) {
-		LinkedHashSet<Node> upstream = new LinkedHashSet<>();
-		LinkedList<Node> queue = new LinkedList<>();
-
-		queue.push(start);
-
-		Node current;
-
-		while(!queue.isEmpty()) {
-			current = queue.pop();
-
-			// go to next node in queue if we've already visited
-			if (!upstream.contains(current)) {
-
-				// remove any connected/disjoint state
-				navigator.cleanState(current);
-
-				upstream.add(current);
-
-				navigator.getRankedAndManualIn(current)
-						.map(Relationship::getStartNode)
-						.forEach(queue::add);
-			}
-		}
-
-		return upstream;
-	}
 
 	private class WalkResult {
 		private final boolean isConnected;
 		private final Node cycleEnd;
 
-		public WalkResult(boolean isConnected) {
+		WalkResult(boolean isConnected) {
 			this(isConnected, null);
 		}
 
-		public WalkResult(boolean isConnected, Node cycleEnd) {
+		WalkResult(boolean isConnected, Node cycleEnd) {
 			this.isConnected = isConnected;
 			this.cycleEnd = cycleEnd;
 		}
 
-		public boolean isConnected() {
+		boolean isConnected() {
 			return isConnected;
 		}
 
-		public Optional<Node> getCycleEnd() {
+		Optional<Node> getCycleEnd() {
 			return Optional.ofNullable(cycleEnd);
 		}
 	}

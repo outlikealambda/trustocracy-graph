@@ -10,6 +10,8 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.PerformsWrites;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.output.TraversalResult;
+import outlikealambda.traversal.ConnectivityManager;
+import outlikealambda.traversal.unwind.BasicUnwinder;
 import outlikealambda.traversal.walk.Navigator;
 import outlikealambda.traversal.walk.Walker;
 
@@ -83,13 +85,12 @@ public class WalkedConnectivity {
 			@Name("targetId") long targetId,
 			@Name("topicId") long topicId
 	) {
-		Navigator navigator = new Navigator(topicId);
-		Walker walker = new Walker(navigator);
+		ConnectivityManager manager = getManager(topicId);
 
 		Node user = getPerson(userId);
 		Node target = getPerson(targetId);
 
-		walker.setTarget(user, target);
+		manager.setTarget(user, target);
 	}
 
 	@Procedure("walked.target.clear")
@@ -98,12 +99,11 @@ public class WalkedConnectivity {
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
 	) {
-		Navigator navigator = new Navigator(topicId);
-		Walker walker = new Walker(navigator);
+		ConnectivityManager manager = getManager(topicId);
 
 		Node user = getPerson(userId);
 
-		walker.clearTarget(user);
+		manager.clearTarget(user);
 	}
 
 	@Procedure("walked.opinion.set")
@@ -113,13 +113,12 @@ public class WalkedConnectivity {
 			@Name("opinionId") long opinionId,
 			@Name("topicId") long topicId
 	) {
-		Navigator navigator = new Navigator(topicId);
-		Walker walker = new Walker(navigator);
+		ConnectivityManager manager = getManager(topicId);
 
 		Node user = getPerson(userId);
 		Node opinion = getOpinion(opinionId);
 
-		walker.setOpinion(user, opinion);
+		manager.setOpinion(user, opinion);
 	}
 
 	@Procedure("walked.opinion.clear")
@@ -128,12 +127,11 @@ public class WalkedConnectivity {
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
 	) {
-		Navigator navigator = new Navigator(topicId);
-		Walker walker = new Walker(navigator);
+		ConnectivityManager manager = getManager(topicId);
 
 		Node user = getPerson(userId);
 
-		walker.clearOpinion(user);
+		manager.clearOpinion(user);
 	}
 
 	private Node getPerson(long userId) {
@@ -142,5 +140,15 @@ public class WalkedConnectivity {
 
 	private Node getOpinion(long opinionId) {
 		return gdb.findNode(OPINION_LABEL, OPINION_ID, opinionId);
+	}
+
+	private static ConnectivityManager getManager(long topicId) {
+		Navigator nav = new Navigator(topicId);
+
+		return new ConnectivityManager(
+				nav,
+				new Walker(nav),
+				new BasicUnwinder(nav)
+		);
 	}
 }

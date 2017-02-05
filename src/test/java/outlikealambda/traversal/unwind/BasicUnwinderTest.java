@@ -1,4 +1,4 @@
-package outlikealambda.traversal.walk;
+package outlikealambda.traversal.unwind;
 
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -7,14 +7,15 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
 import outlikealambda.traversal.TestUtils;
+import outlikealambda.traversal.walk.Navigator;
 
-import java.util.Arrays;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class WalkerTest {
-
+public class BasicUnwinderTest {
 	@ClassRule
 	public static Neo4jRule neo4j = new Neo4jRule();
 
@@ -22,104 +23,31 @@ public class WalkerTest {
 
 	private static Navigator nav = new Navigator(topicId);
 
-	private static Walker fixture = new Walker(nav);
+	private static Unwinder fixture = new BasicUnwinder(nav);
 
 	@Test
-	public void followFindsConnectedPath() {
+	public void unwindClearsSubtreeOnly() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";
 			String b = "b";
 			String c = "c";
 			String d = "d";
-			// while all nodes are ranked to this one, none should follow
-			// that path, because it's not connected
-			String disjoint = "disjoint";
-			String o = "opinion";
+			String e = "e";
 
 			String create = TestUtils.createWalkable(topicId)
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.addPerson(d, 4)
-					.addPerson(disjoint, 5)
-					.addOpinion(o, 0)
-					.connectAuthored(a, o)
-					.connectConnected(b, a)
-					.connectManual(c, b)
-					.connectConnected(d, c)
-					.connectRanked(a, disjoint, 0)
-					.connectRanked(b, disjoint, 0)
-					.connectRanked(c, disjoint, 0)
-					.connectRanked(d, disjoint, 0)
-					.build();
-
-			neo4j.getGraphDatabaseService().execute(create);
-
-			Node aNode = getPerson(1);
-			Node bNode = getPerson(2);
-			Node cNode = getPerson(3);
-			Node dNode = getPerson(4);
-
-			assertEquals(aNode, fixture.follow(aNode));
-			assertEquals(aNode, fixture.follow(bNode));
-
-			// should follow a manual connection
-			assertEquals(aNode, fixture.follow(cNode));
-			assertEquals(aNode, fixture.follow(dNode));
-
-			tx.failure();
-		}
-	}
-
-	@Test(expected = Exception.class)
-	public void notConnectedOnFollowThrowsError() {
-		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
-			String a = "a";
-			String b = "b";
-
-			String create = TestUtils.createWalkable(topicId)
-					.addPerson(a, 1)
-					.addPerson(b, 2)
+					.addPerson(e, 5)
 					.connectRanked(b, a, 0)
-					.build();
-
-			neo4j.getGraphDatabaseService().execute(create);
-
-			Node bNode = getPerson(2);
-
-			fixture.follow(bNode);
-
-			tx.failure();
-		}
-	}
-
-	@Test
-	public void blazeBasic() {
-		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
-			String a = "a";
-			String b = "b";
-			String c = "c";
-			String d = "d";
-			// while all nodes are ranked to this one, none should follow
-			// that path, because it's not connected
-			String disjoint = "disjoint";
-			String o = "opinion";
-
-			String create = TestUtils.createWalkable(topicId)
-					.addPerson(a, 1)
-					.addPerson(b, 2)
-					.addPerson(c, 3)
-					.addPerson(d, 4)
-					.addPerson(disjoint, 5)
-					.addOpinion(o, 0)
-					.connectAuthored(a, o)
-					.connectRanked(b, a, 1)
-					.connectManual(c, b)
-					.connectRanked(d, c, 1)
-					.connectRanked(a, disjoint, 0)
-					.connectRanked(b, disjoint, 0)
-					.connectRanked(c, disjoint, 0)
-					.connectRanked(d, disjoint, 0)
+					.connectRanked(c, b, 0)
+					.connectRanked(d, b, 0)
+					.connectRanked(e, d, 0)
+					.connectConnected(b, a)
+					.connectConnected(c, b)
+					.connectConnected(d, b)
+					.connectConnected(e, d)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -128,44 +56,84 @@ public class WalkerTest {
 			Node bNode = getPerson(2);
 			Node cNode = getPerson(3);
 			Node dNode = getPerson(4);
-			Node disjointNode = getPerson(5);
+			Node eNode = getPerson(5);
 
-			fixture.blaze(dNode);
+			Set<Node> cleared = fixture.unwind(dNode);
 
-			assertEquals(aNode, fixture.follow(aNode));
-			assertEquals(aNode, fixture.follow(bNode));
-			// should follow a manual connection
-			assertEquals(aNode, fixture.follow(cNode));
-			assertEquals(aNode, fixture.follow(dNode));
+			// a <- b <- c should still be connected
+			assertEquals(aNode, nav.getConnectionOut(bNode).getEndNode());
+			assertEquals(bNode, nav.getConnectionOut(cNode).getEndNode());
 
-			assertTrue(nav.isDisjoint(disjointNode));
+			// d and e should not be connected
+			assertFalse(nav.isConnected(dNode));
+			assertFalse(nav.isConnected(eNode));
+
+			// d and e should be in the cleared set
+			assertEquals(2, cleared.size());
+			assertTrue(cleared.contains(dNode));
+			assertTrue(cleared.contains(eNode));
 
 			tx.failure();
 		}
 	}
 
 	@Test
-	public void nodesAvoidActiveCycles() {
+	public void unwindClearsRankedCycle() {
+		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
+			String b = "b";
+			String c = "c";
+			String d = "d";
+
+			String create = TestUtils.createWalkable(topicId)
+					.addPerson(b, 2)
+					.addPerson(c, 3)
+					.addPerson(d, 4)
+					.connectRanked(c, b, 0)
+					.connectRanked(d, c, 0)
+					.connectRanked(b, d, 1)
+					.connectConnected(c, b)
+					.connectConnected(d, c)
+					.build();
+
+			neo4j.getGraphDatabaseService().execute(create);
+
+			Node bNode = getPerson(2);
+			Node cNode = getPerson(3);
+			Node dNode = getPerson(4);
+
+			Set<Node> cleared = fixture.unwind(dNode);
+
+			// b, c and d should not be connected
+			assertFalse(nav.isConnected(bNode));
+			assertFalse(nav.isConnected(cNode));
+			assertFalse(nav.isConnected(dNode));
+
+			// b, c and d should be in the cleared set
+			assertEquals(3, cleared.size());
+			assertTrue(cleared.contains(bNode));
+			assertTrue(cleared.contains(cNode));
+			assertTrue(cleared.contains(dNode));
+
+			tx.failure();
+		}
+	}
+
+	@Test
+	public void unwindAddsUnconnectedNodes() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
 			String a = "a";
 			String b = "b";
 			String c = "c";
 			String d = "d";
-			String z = "z";
-			String o = "opinion";
 
 			String create = TestUtils.createWalkable(topicId)
 					.addPerson(a, 1)
 					.addPerson(b, 2)
 					.addPerson(c, 3)
 					.addPerson(d, 4)
-					.addPerson(z, 5)
-					.addOpinion(o, 0)
-					.connectAuthored(z, o)
 					.connectRanked(b, a, 0)
 					.connectRanked(c, b, 0)
 					.connectRanked(d, c, 0)
-					.connectRanked(d, z, 1)
 					.build();
 
 			neo4j.getGraphDatabaseService().execute(create);
@@ -174,19 +142,13 @@ public class WalkerTest {
 			Node bNode = getPerson(2);
 			Node cNode = getPerson(3);
 			Node dNode = getPerson(4);
-			Node zNode = getPerson(5);
 
-			// Should attempt to go through c, which should cycle and mark all nodes
-			// as disjoint.
-			// Should then attempt z, which should succeed
-			fixture.blaze(dNode);
+			Set<Node> cleared = fixture.unwind(aNode);
 
-			assertEquals(zNode, fixture.follow(dNode));
-			assertEquals(zNode, fixture.follow(zNode));
-
-			assertTrue(nav.isDisjoint(aNode));
-			assertTrue(nav.isDisjoint(bNode));
-			assertTrue(nav.isDisjoint(cNode));
+			assertTrue(cleared.contains(aNode));
+			assertTrue(cleared.contains(bNode));
+			assertTrue(cleared.contains(cNode));
+			assertTrue(cleared.contains(dNode));
 
 			tx.failure();
 		}
@@ -235,15 +197,13 @@ public class WalkerTest {
 			// Should attempt to go through c, which should cycle and mark all nodes
 			// as disjoint.
 			// Should then attempt z, which should succeed
-			Arrays.asList(klbNode, mbNode, ngNode, srNode, llNode)
-					.forEach(fixture::blaze);
+			Set<Node> unwound = fixture.unwind(klbNode);
 
-			assertEquals(klbNode, fixture.follow(klbNode));
-			assertEquals(klbNode, fixture.follow(srNode));
-			assertEquals(klbNode, fixture.follow(mbNode));
-
-			assertTrue(nav.isDisjoint(llNode));
-			assertTrue(nav.isDisjoint(ngNode));
+			assertTrue(unwound.contains(klbNode));
+			assertTrue(unwound.contains(mbNode));
+			assertTrue(unwound.contains(ngNode));
+			assertTrue(unwound.contains(srNode));
+			assertTrue(unwound.contains(llNode));
 
 			tx.failure();
 		}
@@ -293,19 +253,13 @@ public class WalkerTest {
 			// Should attempt to go through c, which should cycle and mark all nodes
 			// as disjoint.
 			// Should then attempt z, which should succeed
-			Arrays.asList(
-					wsNode,
-					cdNode,
-					slNode,
-					gfNode,
-					crNode
-					).forEach(fixture::blaze);
+			Set<Node> unwound = fixture.unwind(wsNode);
 
-			assertEquals(wsNode, fixture.follow(wsNode));
-			assertEquals(wsNode, fixture.follow(cdNode));
-			assertEquals(wsNode, fixture.follow(slNode));
-			assertEquals(wsNode, fixture.follow(gfNode));
-			assertEquals(wsNode, fixture.follow(crNode));
+			assertTrue(unwound.contains(wsNode));
+			assertTrue(unwound.contains(cdNode));
+			assertTrue(unwound.contains(slNode));
+			assertTrue(unwound.contains(gfNode));
+			assertTrue(unwound.contains(crNode));
 
 			tx.failure();
 		}
@@ -313,9 +267,5 @@ public class WalkerTest {
 
 	private Node getPerson(int id) {
 		return neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", id);
-	}
-
-	private Node getOpinion(int id) {
-		return neo4j.getGraphDatabaseService().findNode(Label.label("Opinion"), "id", id);
 	}
 }
