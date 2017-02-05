@@ -57,7 +57,7 @@ public class SelectiveConnectivityTest {
 
 			session.run(create);
 
-			List<Record> results = session.run("CALL friend.author.opinion(1, 1)").list();
+			List<Record> results = session.run("CALL selective.friend.author.opinion(1, 1)").list();
 
 			assertTrue(containsFriendAuthorNameCombo(b, d, results));
 			assertTrue(containsFriendAuthorNameCombo(c, d, results));
