@@ -25,21 +25,6 @@ public class CleanBlazer implements Blazer.Controller {
 		new Blazer(navigator, this).start(start);
 	}
 
-	/**
-	 * finds the author for a given connected node.
-	 *
-	 * throws an IllegalArgumentException if node is not connected
-	 */
-	public Node follow(Node source) {
-		if (navigator.isAuthor(source)) {
-			return source;
-		}
-
-		return Traversals.asFunction(navigator::getConnectionOut)
-				.andThen(Relationship::getEndNode)
-				.andThen(this::follow)
-				.apply(source);
-	}
 
 	@Override
 	public Optional<Blazer.Result> handleProcessed(Node source) {

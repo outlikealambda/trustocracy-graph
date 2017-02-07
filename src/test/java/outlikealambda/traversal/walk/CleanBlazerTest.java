@@ -7,6 +7,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
 import outlikealambda.traversal.TestUtils;
+import outlikealambda.utils.Traversals;
 
 import java.util.Arrays;
 
@@ -60,12 +61,12 @@ public class CleanBlazerTest {
 			Node cNode = getPerson(3);
 			Node dNode = getPerson(4);
 
-			assertEquals(aNode, fixture.follow(aNode));
-			assertEquals(aNode, fixture.follow(bNode));
+			assertEquals(aNode, Traversals.follow(nav, aNode));
+			assertEquals(aNode, Traversals.follow(nav, bNode));
 
 			// should follow a manual connection
-			assertEquals(aNode, fixture.follow(cNode));
-			assertEquals(aNode, fixture.follow(dNode));
+			assertEquals(aNode, Traversals.follow(nav, cNode));
+			assertEquals(aNode, Traversals.follow(nav, dNode));
 
 			tx.failure();
 		}
@@ -87,7 +88,7 @@ public class CleanBlazerTest {
 
 			Node bNode = getPerson(2);
 
-			fixture.follow(bNode);
+			Traversals.follow(nav, bNode);
 
 			tx.failure();
 		}
@@ -132,11 +133,11 @@ public class CleanBlazerTest {
 
 			fixture.go(dNode);
 
-			assertEquals(aNode, fixture.follow(aNode));
-			assertEquals(aNode, fixture.follow(bNode));
+			assertEquals(aNode, Traversals.follow(nav, aNode));
+			assertEquals(aNode, Traversals.follow(nav, bNode));
 			// should follow a manual connection
-			assertEquals(aNode, fixture.follow(cNode));
-			assertEquals(aNode, fixture.follow(dNode));
+			assertEquals(aNode, Traversals.follow(nav, cNode));
+			assertEquals(aNode, Traversals.follow(nav, dNode));
 
 			assertTrue(nav.isDisjoint(disjointNode));
 
@@ -181,8 +182,8 @@ public class CleanBlazerTest {
 			// Should then attempt z, which should succeed
 			fixture.go(dNode);
 
-			assertEquals(zNode, fixture.follow(dNode));
-			assertEquals(zNode, fixture.follow(zNode));
+			assertEquals(zNode, Traversals.follow(nav, dNode));
+			assertEquals(zNode, Traversals.follow(nav, zNode));
 
 			assertTrue(nav.isDisjoint(aNode));
 			assertTrue(nav.isDisjoint(bNode));
@@ -238,9 +239,9 @@ public class CleanBlazerTest {
 			fixture.go(srNode);
 			fixture.go(llNode);
 
-			assertEquals(klbNode, fixture.follow(klbNode));
-			assertEquals(klbNode, fixture.follow(srNode));
-			assertEquals(klbNode, fixture.follow(mbNode));
+			assertEquals(klbNode, Traversals.follow(nav, klbNode));
+			assertEquals(klbNode, Traversals.follow(nav, srNode));
+			assertEquals(klbNode, Traversals.follow(nav, mbNode));
 
 			assertTrue(nav.isDisjoint(llNode));
 			assertTrue(nav.isDisjoint(ngNode));
@@ -301,11 +302,11 @@ public class CleanBlazerTest {
 					crNode
 					).forEach(fixture::go);
 
-			assertEquals(wsNode, fixture.follow(wsNode));
-			assertEquals(wsNode, fixture.follow(cdNode));
-			assertEquals(wsNode, fixture.follow(slNode));
-			assertEquals(wsNode, fixture.follow(gfNode));
-			assertEquals(wsNode, fixture.follow(crNode));
+			assertEquals(wsNode, Traversals.follow(nav, wsNode));
+			assertEquals(wsNode, Traversals.follow(nav, cdNode));
+			assertEquals(wsNode, Traversals.follow(nav, slNode));
+			assertEquals(wsNode, Traversals.follow(nav, gfNode));
+			assertEquals(wsNode, Traversals.follow(nav, crNode));
 
 			tx.failure();
 		}

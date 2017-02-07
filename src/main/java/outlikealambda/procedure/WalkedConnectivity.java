@@ -14,6 +14,7 @@ import outlikealambda.traversal.UnwindAndWalk;
 import outlikealambda.traversal.unwind.BasicUnwinder;
 import outlikealambda.traversal.walk.Navigator;
 import outlikealambda.traversal.walk.CleanBlazer;
+import outlikealambda.utils.Traversals;
 
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +40,6 @@ public class WalkedConnectivity {
 	) {
 		Node user = getPerson(userId);
 		Navigator navigator = new Navigator(topicId);
-		CleanBlazer walker = new CleanBlazer(navigator);
 
 		Map<Node, Relationship> neighborRelationships = navigator.getRankedAndManualOut(user)
 				.collect(toMap(
@@ -51,7 +51,7 @@ public class WalkedConnectivity {
 				.filter(navigator::isConnected)
 				.map(neighbor -> Pair.of(
 						neighbor,
-						walker.follow(neighbor)
+						Traversals.follow(navigator, neighbor)
 				))
 				.collect(toMap(
 						Pair::getLeft,

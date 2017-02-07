@@ -32,7 +32,7 @@ public class TraversalComparer {
 
 	private static Navigator nav = new Navigator(topicId);
 
-	private static UnwindAndWalk fixture = new UnwindAndWalk(
+	private static ConnectivityManager fixture = new UnwindAndWalk(
 			nav,
 			new CleanBlazer(nav),
 			new BasicUnwinder(nav)

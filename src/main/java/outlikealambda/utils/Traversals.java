@@ -4,6 +4,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import outlikealambda.traversal.walk.Navigator;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -37,6 +38,22 @@ public final class Traversals {
 
 	public static <T, U> Function<T, U> asFunction(Function<T, U> fn) {
 		return fn;
+	}
+
+	/**
+	 * finds the author for a given connected node.
+	 *
+	 * throws an IllegalArgumentException if node is not connected
+	 */
+	public static Node follow(Navigator navigator, Node source) {
+		if (navigator.isAuthor(source)) {
+			return source;
+		}
+
+		return Traversals.asFunction(navigator::getConnectionOut)
+				.andThen(Relationship::getEndNode)
+				.andThen(n -> follow(navigator, n))
+				.apply(source);
 	}
 }
 
