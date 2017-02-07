@@ -93,6 +93,7 @@ public class Blazer {
 					Result result = tr.getRight();
 
 					if (result.isSuccess()) {
+						navigator.clearConnectionState(source);
 						navigator.setConnected(source, target);
 
 						// pass through
@@ -100,6 +101,7 @@ public class Blazer {
 					} else {
 						// We have a non-connected result, that didn't get filtered;
 						// must be a cycle
+						navigator.clearConnectionState(source);
 						navigator.setDisjoint(source);
 
 						if (result.getCycleEndId() == source.getId()) {
@@ -117,6 +119,7 @@ public class Blazer {
 				() -> {
 					// all of the outgoing targets were disjoint, so we ourselves
 					// are disjoint
+					navigator.clearConnectionState(source);
 					navigator.setDisjoint(source);
 					return Result.noPathFound();
 				}
