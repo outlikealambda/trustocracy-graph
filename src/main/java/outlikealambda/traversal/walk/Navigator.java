@@ -55,7 +55,7 @@ public class Navigator {
 	// TODO: optimize
 	// Is there a way to avoid setting/removing a property on each node?
 	//
-	public void cleanState(Node n) {
+	public void clearConnectionState(Node n) {
 		Optionals.ifElse(
 				Optional.of(n).map(getSingleOut(connectedType)),
 				Relationship::delete,

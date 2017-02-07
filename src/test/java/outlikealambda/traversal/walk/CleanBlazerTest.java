@@ -13,7 +13,7 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class WalkerTest {
+public class CleanBlazerTest {
 
 	@ClassRule
 	public static Neo4jRule neo4j = new Neo4jRule();
@@ -22,7 +22,7 @@ public class WalkerTest {
 
 	private static Navigator nav = new Navigator(topicId);
 
-	private static Walker fixture = new Walker(nav);
+	private static CleanBlazer fixture = new CleanBlazer(nav);
 
 	@Test
 	public void followFindsConnectedPath() {
@@ -130,7 +130,7 @@ public class WalkerTest {
 			Node dNode = getPerson(4);
 			Node disjointNode = getPerson(5);
 
-			fixture.blaze(dNode);
+			fixture.go(dNode);
 
 			assertEquals(aNode, fixture.follow(aNode));
 			assertEquals(aNode, fixture.follow(bNode));
@@ -179,7 +179,7 @@ public class WalkerTest {
 			// Should attempt to go through c, which should cycle and mark all nodes
 			// as disjoint.
 			// Should then attempt z, which should succeed
-			fixture.blaze(dNode);
+			fixture.go(dNode);
 
 			assertEquals(zNode, fixture.follow(dNode));
 			assertEquals(zNode, fixture.follow(zNode));
@@ -232,11 +232,11 @@ public class WalkerTest {
 			Node srNode = getPerson(4);
 			Node llNode = getPerson(5);
 
-			// Should attempt to go through c, which should cycle and mark all nodes
-			// as disjoint.
-			// Should then attempt z, which should succeed
-			Arrays.asList(klbNode, mbNode, ngNode, srNode, llNode)
-					.forEach(fixture::blaze);
+			fixture.go(klbNode);
+			fixture.go(mbNode);
+			fixture.go(ngNode);
+			fixture.go(srNode);
+			fixture.go(llNode);
 
 			assertEquals(klbNode, fixture.follow(klbNode));
 			assertEquals(klbNode, fixture.follow(srNode));
@@ -299,7 +299,7 @@ public class WalkerTest {
 					slNode,
 					gfNode,
 					crNode
-					).forEach(fixture::blaze);
+					).forEach(fixture::go);
 
 			assertEquals(wsNode, fixture.follow(wsNode));
 			assertEquals(wsNode, fixture.follow(cdNode));

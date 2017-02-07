@@ -10,7 +10,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
 import outlikealambda.traversal.unwind.BasicUnwinder;
 import outlikealambda.traversal.walk.Navigator;
-import outlikealambda.traversal.walk.Walker;
+import outlikealambda.traversal.walk.CleanBlazer;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,9 +32,9 @@ public class TraversalComparer {
 
 	private static Navigator nav = new Navigator(topicId);
 
-	private static ConnectivityManager fixture = new ConnectivityManager(
+	private static UnwindAndWalk fixture = new UnwindAndWalk(
 			nav,
-			new Walker(nav),
+			new CleanBlazer(nav),
 			new BasicUnwinder(nav)
 	);
 

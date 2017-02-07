@@ -35,7 +35,7 @@ public class BasicUnwinder implements Unwinder {
 			if (!upstream.contains(current)) {
 
 				// remove any connected/disjoint state
-				nav.cleanState(current);
+				nav.clearConnectionState(current);
 
 				upstream.add(current);
 
