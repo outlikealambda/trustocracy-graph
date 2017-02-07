@@ -10,10 +10,8 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.PerformsWrites;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.output.TraversalResult;
-import outlikealambda.traversal.UnwindAndWalk;
-import outlikealambda.traversal.unwind.BasicUnwinder;
+import outlikealambda.traversal.ConnectivityManager;
 import outlikealambda.traversal.walk.Navigator;
-import outlikealambda.traversal.walk.CleanBlazer;
 import outlikealambda.utils.Traversals;
 
 import java.util.Map;
@@ -85,7 +83,7 @@ public class WalkedConnectivity {
 			@Name("targetId") long targetId,
 			@Name("topicId") long topicId
 	) {
-		UnwindAndWalk manager = getManager(topicId);
+		ConnectivityManager manager = ConnectivityManager.unwindAndWalk(topicId);
 
 		Node user = getPerson(userId);
 		Node target = getPerson(targetId);
@@ -99,7 +97,7 @@ public class WalkedConnectivity {
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
 	) {
-		UnwindAndWalk manager = getManager(topicId);
+		ConnectivityManager manager = ConnectivityManager.unwindAndWalk(topicId);
 
 		Node user = getPerson(userId);
 
@@ -113,7 +111,7 @@ public class WalkedConnectivity {
 			@Name("opinionId") long opinionId,
 			@Name("topicId") long topicId
 	) {
-		UnwindAndWalk manager = getManager(topicId);
+		ConnectivityManager manager = ConnectivityManager.unwindAndWalk(topicId);
 
 		Node user = getPerson(userId);
 		Node opinion = getOpinion(opinionId);
@@ -127,7 +125,7 @@ public class WalkedConnectivity {
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
 	) {
-		UnwindAndWalk manager = getManager(topicId);
+		ConnectivityManager manager = ConnectivityManager.unwindAndWalk(topicId);
 
 		Node user = getPerson(userId);
 
@@ -140,15 +138,5 @@ public class WalkedConnectivity {
 
 	private Node getOpinion(long opinionId) {
 		return gdb.findNode(OPINION_LABEL, OPINION_ID, opinionId);
-	}
-
-	private static UnwindAndWalk getManager(long topicId) {
-		Navigator nav = new Navigator(topicId);
-
-		return new UnwindAndWalk(
-				nav,
-				new CleanBlazer(nav),
-				new BasicUnwinder(nav)
-		);
 	}
 }

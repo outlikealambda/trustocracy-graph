@@ -32,11 +32,7 @@ public class TraversalComparer {
 
 	private static Navigator nav = new Navigator(topicId);
 
-	private static ConnectivityManager fixture = new UnwindAndWalk(
-			nav,
-			new CleanBlazer(nav),
-			new BasicUnwinder(nav)
-	);
+	private static ConnectivityManager fixture = ConnectivityManager.unwindAndWalk(topicId);
 
 	@Test
 	public void forwardWalkIsDeterministic() {
