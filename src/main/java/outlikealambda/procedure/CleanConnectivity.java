@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 
-public class WalkedConnectivity {
+public class CleanConnectivity {
 	private static final Label PERSON_LABEL = Label.label("Person");
 	private static final String PERSON_ID = "id";
 
@@ -31,7 +31,7 @@ public class WalkedConnectivity {
 	@Context
 	public GraphDatabaseService gdb;
 
-	@Procedure("walked.friend.author.opinion")
+	@Procedure("clean.friend.author.opinion")
 	public Stream<TraversalResult> traverse(
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
@@ -76,7 +76,7 @@ public class WalkedConnectivity {
 		);
 	}
 
-	@Procedure("walked.target.set")
+	@Procedure("clean.target.set")
 	@PerformsWrites
 	public void setTarget(
 			@Name("userId") long userId,
@@ -91,7 +91,7 @@ public class WalkedConnectivity {
 		manager.setTarget(user, target);
 	}
 
-	@Procedure("walked.target.clear")
+	@Procedure("clean.target.clear")
 	@PerformsWrites
 	public void clearTarget(
 			@Name("userId") long userId,
@@ -104,7 +104,7 @@ public class WalkedConnectivity {
 		manager.clearTarget(user);
 	}
 
-	@Procedure("walked.opinion.set")
+	@Procedure("clean.opinion.set")
 	@PerformsWrites
 	public void setOpinion(
 			@Name("userId") long userId,
@@ -119,7 +119,7 @@ public class WalkedConnectivity {
 		manager.setOpinion(user, opinion);
 	}
 
-	@Procedure("walked.opinion.clear")
+	@Procedure("clean.opinion.clear")
 	@PerformsWrites
 	public void clearOpinion(
 			@Name("userId") long userId,
