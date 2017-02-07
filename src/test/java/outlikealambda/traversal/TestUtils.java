@@ -30,47 +30,6 @@ public class TestUtils {
 		return r -> r.get("friend").asMap().get("name").equals(friendName);
 	}
 
-	public static class Builder {
-		private List<String> creates = new ArrayList<>();
-
-		public String build() {
-			return "CREATE" + creates.stream().collect(Collectors.joining(","));
-		}
-
-		public Builder addPerson(String person, int id) {
-			creates.add(String.format("(%s:Person {name:'%s', id:%d})", person, person, id));
-			return this;
-		}
-
-		public Builder addOpinion(String opinion, int id) {
-			creates.add(String.format("(%s:Opinion {id:%d})", opinion, id));
-			return this;
-		}
-
-		public Builder connectManual(String source, String target, RelationshipFilter rf) {
-			creates.add(connect(source, target, rf.getManualType().name()));
-			return this;
-		}
-
-		public Builder connectProvisional(String source, String target, RelationshipFilter rf) {
-			creates.add(connect(source, target, rf.getProvisionalType().name()));
-			return this;
-		}
-
-		public Builder connectAuthored(String source, String target, RelationshipFilter rf) {
-			creates.add(connect(source, target, rf.getAuthoredType().name()));
-			return this;
-		}
-
-		public Builder connectRanked(String source, String target, int rank) {
-			creates.add(connect(source, target, String.format("RANKED {rank:%d}", rank)));
-			return this;
-		}
-
-		private static String connect(String source, String target, String r) {
-			return String.format("(%s)-[:%s]->(%s)", source, r, target);
-		}
-	}
 
 	public static Walkable createWalkable(int topicId) {
 		return new Walkable(topicId);

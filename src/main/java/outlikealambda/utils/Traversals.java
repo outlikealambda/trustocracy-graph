@@ -6,6 +6,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import outlikealambda.traversal.walk.Navigator;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -55,5 +56,13 @@ public final class Traversals {
 				.andThen(n -> follow(navigator, n))
 				.apply(source);
 	}
+
+	public static Comparator<Relationship> rankComparator =
+			(left, right) -> getRank(left) < getRank(right) ? -1 : 1;
+
+	private static long getRank(Relationship r) {
+		return (long) r.getProperty("rank");
+	}
+
 }
 

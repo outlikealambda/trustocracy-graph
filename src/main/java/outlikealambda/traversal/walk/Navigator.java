@@ -4,7 +4,6 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import outlikealambda.traversal.RelationshipFilter;
 import outlikealambda.traversal.RelationshipTypes;
 import outlikealambda.utils.Optionals;
 import outlikealambda.utils.Traversals;
@@ -120,7 +119,7 @@ public class Navigator {
 
 	private Stream<Relationship> getRankedByRank(Node n) {
 		return goStream(n.getRelationships(rankedType, Direction.OUTGOING))
-				.sorted(RelationshipFilter.rankComparator);
+				.sorted(Traversals.rankComparator);
 	}
 
 

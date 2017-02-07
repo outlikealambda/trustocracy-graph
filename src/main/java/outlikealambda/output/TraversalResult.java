@@ -2,7 +2,7 @@ package outlikealambda.output;
 
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import outlikealambda.traversal.RelationshipFilter;
+import outlikealambda.utils.Traversals;
 
 import java.util.Collections;
 import java.util.Map;
@@ -33,7 +33,7 @@ public class TraversalResult {
 	) {
 		return friendLinks.entrySet().stream()
 				.sorted((friendAndRel1, friendAndRel2) ->
-						RelationshipFilter.rankComparator.compare(
+						Traversals.rankComparator.compare(
 								friendAndRel1.getValue(),
 								friendAndRel2.getValue()))
 				.map(friendAndRel -> {
