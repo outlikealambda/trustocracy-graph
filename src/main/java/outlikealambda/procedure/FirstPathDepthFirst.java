@@ -27,7 +27,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
-import static org.neo4j.function.Predicates.not;
+import static outlikealambda.utils.Composables.not;
 import static outlikealambda.utils.Traversals.goStream;
 
 public class FirstPathDepthFirst {
