@@ -44,8 +44,13 @@ public class Blazer {
 	}
 
 	private Result blaze(Node source) {
-		Optional<Result> alreadyProcessed = controller.handleProcessed(source);
 
+		if (navigator.isOpinion(source)) {
+			// we've found an opinion
+			return Result.pathFound();
+		}
+
+		Optional<Result> alreadyProcessed = controller.handleProcessed(source);
 		if (alreadyProcessed.isPresent()) {
 			// we've already processed this node
 			return alreadyProcessed.get();
@@ -54,11 +59,6 @@ public class Blazer {
 		// We've found a cycle!
 		if (!visited.add(source.getId())) {
 			return Result.cycle(source.getId());
-		}
-
-		// Author
-		if (navigator.isAuthor(source)) {
-			return Result.pathFound();
 		}
 
 		return checkOutgoing(source);

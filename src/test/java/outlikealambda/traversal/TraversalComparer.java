@@ -9,9 +9,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
-import outlikealambda.traversal.unwind.BasicUnwinder;
 import outlikealambda.traversal.walk.Navigator;
-import outlikealambda.traversal.walk.CleanBlazer;
 
 import java.util.Collections;
 import java.util.List;
@@ -84,14 +82,15 @@ public class TraversalComparer {
 			assertTrue(0 < baseConnectionMap.entrySet().size());
 
 			for (int passes = 0; passes < shuffleCount; passes++) {
-				clearAuthored();
-				clearConnected();
-
 				Collections.shuffle(authorOpinions);
-
 				System.out.println("shuffle #" + (passes + 1));
 
+				clearAuthored();
+				clearConnected();
 				insertAndCompareConnectionMap(baseConnectionMap, authorOpinions, basic);
+
+				clearAuthored();
+				clearConnected();
 				insertAndCompareConnectionMap(baseConnectionMap, authorOpinions, smart);
 			}
 

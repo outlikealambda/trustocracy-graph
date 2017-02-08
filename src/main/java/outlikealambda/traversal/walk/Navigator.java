@@ -4,6 +4,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import outlikealambda.traversal.Nodes;
 import outlikealambda.traversal.RelationshipTypes;
 import outlikealambda.utils.Optionals;
 import outlikealambda.utils.Traversals;
@@ -44,6 +45,10 @@ public class Navigator {
 		return n.hasRelationship(authoredType, Direction.OUTGOING);
 	}
 
+	public boolean isOpinion(Node n) {
+		return n.hasLabel(Nodes.OPINION_LABEL);
+	}
+
 	public Node getOpinion(Node author) {
 		return Optional.of(author)
 				.map(getSingleOut(authoredType))
@@ -53,7 +58,6 @@ public class Navigator {
 
 	// TODO: optimize
 	// Is there a way to avoid setting/removing a property on each node?
-	//
 	public void clearConnectionState(Node n) {
 		Optionals.ifElse(
 				Optional.of(n).map(getSingleOut(connectedType)),
@@ -107,8 +111,11 @@ public class Navigator {
 	}
 
 	public Stream<Relationship> getWalkableOutgoing(Node n) {
-		return Optional.of(n)
-				.map(getSingleOut(manualType))
+		return Traversals.first(
+					n,
+					Stream.of(
+							getSingleOut(authoredType),
+							getSingleOut(manualType)))
 				.map(Stream::of)
 				.orElseGet(() -> getRankedByRank(n));
 	}

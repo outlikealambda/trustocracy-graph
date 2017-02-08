@@ -165,10 +165,6 @@ public class DirtyBlazerTest {
 			Node llNode = getPerson(5);
 
 			fixture.go(klbNode);
-			fixture.go(mbNode);
-			fixture.go(ngNode);
-			fixture.go(srNode);
-			fixture.go(llNode);
 
 			assertEquals(klbNode, Traversals.follow(nav, klbNode));
 			assertEquals(klbNode, Traversals.follow(nav, srNode));
