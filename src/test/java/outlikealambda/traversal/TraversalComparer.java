@@ -2,7 +2,6 @@ package outlikealambda.traversal;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -12,12 +11,13 @@ import org.neo4j.harness.junit.Neo4jRule;
 import outlikealambda.traversal.walk.Navigator;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -37,7 +37,7 @@ public class TraversalComparer {
 	@Test
 	public void forwardWalkIsDeterministic() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
-			int size = 50;
+			int size = 30;
 			int opinionCount = 10;
 			int shuffleCount = 100;
 
@@ -63,10 +63,12 @@ public class TraversalComparer {
 
 			neo4j.getGraphDatabaseService().execute(createStatement);
 
-			Random rand = new Random();
+			List<Integer> personIds = IntStream.range(0, size).boxed().collect(toList());
+			Collections.shuffle(personIds);
+
 			final List<Pair<Node, Node>> authorOpinions = IntStream.range(0, opinionCount)
-					.mapToObj(i -> Pair.of(getPerson(rand.nextInt(size)), getOpinion(i)))
-					.collect(Collectors.toList());
+					.mapToObj(i -> Pair.of(getPerson(personIds.get(i)), getOpinion(i)))
+					.collect(toList());
 
 			System.out.println("Initial Pass");
 			authorOpinions
@@ -98,51 +100,58 @@ public class TraversalComparer {
 		}
 	}
 
-	@Ignore
 	@Test
-	public void basicWalkTimed() {
+	public void compareRuntime() {
+		int size = 600;
+		int opinionCount = 25;
+		int shuffleCount = 500;
+
+		boolean[][] matrix = RelationshipMatrix.build(size);
+
+		TestUtils.Walkable builder = new TestUtils.Walkable(0);
+
+		// initialize persons
+		IntStream.range(0, size)
+				.forEach(builder::addPersonIdOnly);
+
+		// initialize opinions
+		IntStream.range(0, opinionCount)
+				.forEach(builder::addOpinionIdOnly);
+
+		// initialize ranked relationships
+		RelationshipMatrix.toDirectedTriples(matrix)
+				.forEach(triple -> builder.connectRankedById(triple.getLeft(), triple.getRight(), triple.getMiddle()));
+
+		String createStatement = builder.build();
+
+		List<Integer> personIds = IntStream.range(0, size).boxed().collect(toList());
+		Collections.shuffle(personIds);
+
+		final List<Pair<Integer, Integer>> authorOpinionIds = IntStream.range(0, opinionCount)
+				.mapToObj(i -> Pair.of(personIds.get(i), i))
+				.collect(toList());
+
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
-
-			int size = 400;
-			int opinionCount = 10;
-			int shuffleCount = 1000;
-
-			boolean[][] matrix = RelationshipMatrix.build(size);
-
-			TestUtils.Walkable builder = new TestUtils.Walkable(0);
-
-			// initialize persons
-			IntStream.range(0, size)
-					.forEach(builder::addPersonIdOnly);
-
-			// initialize opinions
-			IntStream.range(0, opinionCount)
-					.forEach(builder::addOpinionIdOnly);
-
-			// initialize ranked relationships
-			RelationshipMatrix.toDirectedTriples(matrix)
-					.forEach(triple -> builder.connectRankedById(triple.getLeft(), triple.getRight(), triple.getMiddle()));
-
-			String createStatement = builder.build();
-
-			System.out.println(createStatement.replace(",", ",\n"));
 
 			neo4j.getGraphDatabaseService().execute(createStatement);
 
-			Random rand = new Random();
-			final List<Pair<Node, Node>> authorOpinions = IntStream.range(0, opinionCount)
-					.mapToObj(i -> Pair.of(getPerson(rand.nextInt(size)), getOpinion(i)))
+
+			List<Pair<Node, Node>> authorOpinions = authorOpinionIds.stream()
+					.map(pair -> Pair.of(
+							getPerson(pair.getLeft()),
+							getOpinion(pair.getRight())
+					))
 					.collect(Collectors.toList());
 
-			System.out.println("Initial Pass");
-			authorOpinions
-					.forEach(ao -> basic.setOpinion(ao.getLeft(), ao.getRight()));
+			authorOpinions.forEach(ao -> basic.setOpinion(
+					ao.getLeft(),
+					ao.getRight()
+			));
 
 			Map<Node, Node> baseConnectionMap = getConnectionMap();
+			assertTrue(0 < baseConnectionMap.entrySet().size());
 
 			long start = System.currentTimeMillis();
-
-			assertTrue(0 < baseConnectionMap.entrySet().size());
 
 			for (int passes = 0; passes < shuffleCount; passes++) {
 				clearAuthored();
@@ -150,62 +159,38 @@ public class TraversalComparer {
 
 				Collections.shuffle(authorOpinions);
 
-				System.out.println("shuffle #" + (passes + 1));
+				if ((passes + 1) % 100 == 0) {
+					System.out.println("shuffle #" + (passes + 1));
+				}
 
 				insertAndCompareConnectionMap(baseConnectionMap, authorOpinions, basic);
 			}
 
-			System.out.println(start - System.currentTimeMillis() + "ms");
+			System.out.println("CLEAN:" + (start - System.currentTimeMillis()) + "ms");
 
 			tx.failure();
 		}
-	}
 
-	@Ignore
-	@Test
-	public void smartWalkTimed() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {
-
-			int size = 400;
-			int opinionCount = 10;
-			int shuffleCount = 1000;
-
-			boolean[][] matrix = RelationshipMatrix.build(size);
-
-			TestUtils.Walkable builder = new TestUtils.Walkable(0);
-
-			// initialize persons
-			IntStream.range(0, size)
-					.forEach(builder::addPersonIdOnly);
-
-			// initialize opinions
-			IntStream.range(0, opinionCount)
-					.forEach(builder::addOpinionIdOnly);
-
-			// initialize ranked relationships
-			RelationshipMatrix.toDirectedTriples(matrix)
-					.forEach(triple -> builder.connectRankedById(triple.getLeft(), triple.getRight(), triple.getMiddle()));
-
-			String createStatement = builder.build();
-
-			System.out.println(createStatement.replace(",", ",\n"));
 
 			neo4j.getGraphDatabaseService().execute(createStatement);
 
-			Random rand = new Random();
-			final List<Pair<Node, Node>> authorOpinions = IntStream.range(0, opinionCount)
-					.mapToObj(i -> Pair.of(getPerson(rand.nextInt(size)), getOpinion(i)))
+			List<Pair<Node, Node>> authorOpinions = authorOpinionIds.stream()
+					.map(pair -> Pair.of(
+							getPerson(pair.getLeft()),
+							getOpinion(pair.getRight())
+					))
 					.collect(Collectors.toList());
 
-			System.out.println("Initial Pass");
-			authorOpinions
-					.forEach(ao -> basic.setOpinion(ao.getLeft(), ao.getRight()));
+			authorOpinions.forEach(ao -> basic.setOpinion(
+					ao.getLeft(),
+					ao.getRight()
+			));
 
 			Map<Node, Node> baseConnectionMap = getConnectionMap();
+			assertTrue(0 < baseConnectionMap.entrySet().size());
 
 			long start = System.currentTimeMillis();
-
-			assertTrue(0 < baseConnectionMap.entrySet().size());
 
 			for (int passes = 0; passes < shuffleCount; passes++) {
 				clearAuthored();
@@ -213,14 +198,14 @@ public class TraversalComparer {
 
 				Collections.shuffle(authorOpinions);
 
-				if (passes % 20 == 0) {
+				if ((passes + 1) % 100 == 0) {
 					System.out.println("shuffle #" + (passes + 1));
 				}
 
 				insertAndCompareConnectionMap(baseConnectionMap, authorOpinions, smart);
 			}
 
-			System.out.println(start - System.currentTimeMillis() + "ms");
+			System.out.println("DIRTY:" + (start - System.currentTimeMillis()) + "ms");
 
 			tx.failure();
 		}
@@ -246,7 +231,7 @@ public class TraversalComparer {
 	private static void clearConnected() {
 		neo4j.getGraphDatabaseService().getAllNodes().stream()
 				.filter(nav::isConnected)
-				.forEach(source -> nav.setTarget(source, null));
+				.forEach(nav::clearConnectionState);
 	}
 
 	private static void clearAuthored() {
