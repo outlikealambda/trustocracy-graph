@@ -10,6 +10,8 @@ import outlikealambda.traversal.walk.Navigator;
 import java.util.function.Consumer;
 
 public interface ConnectivityManager {
+	void updateConnectivity(Node source);
+
 	void setTarget(Node source, Node target);
 
 	void clearTarget(Node source);
@@ -21,24 +23,25 @@ public interface ConnectivityManager {
 	static ConnectivityManager create(Navigator nav, Consumer<Node> update) {
 		return new ConnectivityManager() {
 			@Override
+			public void updateConnectivity(Node source) {
+				update.accept(source);
+			}
+
+			@Override
 			public void setTarget(Node source, Node target) {
 				nav.setTarget(source, target);
-				update.accept(source);
 			}
 
 			@Override public void clearTarget(Node source) {
 				nav.setTarget(source, null);
-				update.accept(source);
 			}
 
 			@Override public void setOpinion(Node author, Node opinion) {
 				nav.setOpinion(author, opinion);
-				update.accept(author);
 			}
 
 			@Override public void clearOpinion(Node author) {
 				nav.setOpinion(author, null);
-				update.accept(author);
 			}
 		};
 	}
@@ -62,6 +65,5 @@ public interface ConnectivityManager {
 				nav,
 				blazer::go
 		);
-
 	}
 }

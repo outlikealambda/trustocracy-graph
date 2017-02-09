@@ -76,6 +76,18 @@ public class CleanConnectivity {
 		);
 	}
 
+	@Procedure("clean.update")
+	public void updateConnectivity(
+			@Name("userId") long userId,
+			@Name("topicId") long topicId
+	) {
+		ConnectivityManager manager = ConnectivityManager.dirtyWalk(topicId);
+
+		Node user = getPerson(userId);
+
+		manager.updateConnectivity(user);
+	}
+
 	@Procedure("clean.target.set")
 	@PerformsWrites
 	public void setTarget(
