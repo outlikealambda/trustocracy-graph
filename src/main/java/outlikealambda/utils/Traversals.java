@@ -4,8 +4,14 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import outlikealambda.traversal.walk.Navigator;
 
-
 public final class Traversals {
+
+	public static int measureInfluence(Navigator navigator, Node target) {
+		return 1 + navigator.getConnectionsIn(target)
+				.map(Relationship::getStartNode)
+				.mapToInt(source -> measureInfluence(navigator, source))
+				.sum();
+	}
 
 	/**
 	 * finds the author for a given connected node.

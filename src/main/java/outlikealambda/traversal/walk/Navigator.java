@@ -86,22 +86,26 @@ public class Navigator {
 				));
 	}
 
+	public Stream<Relationship> getConnectionsIn(Node n) {
+		return Composables.goStream(n.getRelationships(Direction.INCOMING, connectedType));
+	}
+
 	public Stream<Relationship> getRankedAndManualOut(Node n) {
 		return Composables.goStream(n.getRelationships(Direction.OUTGOING, rankedType, manualType));
 	}
 
-	public Stream<Relationship> getWalkableOutgoing(Node n) {
-		return Optionals.first(
-					n,
-					Stream.of(
-							Relationships.getSingleOut(authoredType),
-							Relationships.getSingleOut(manualType)))
-				.map(Stream::of)
-				.orElseGet(() -> getRankedByRank(n));
-	}
-
 	public Stream<Relationship> getRankedAndManualIn(Node n) {
 		return Composables.goStream(n.getRelationships(Direction.INCOMING, manualType, rankedType));
+	}
+
+	public Stream<Relationship> getWalkableOutgoing(Node n) {
+		return Optionals.first(
+				n,
+				Stream.of(
+						Relationships.getSingleOut(authoredType),
+						Relationships.getSingleOut(manualType)))
+				.map(Stream::of)
+				.orElseGet(() -> getRankedByRank(n));
 	}
 
 	private Stream<Relationship> getRankedByRank(Node n) {

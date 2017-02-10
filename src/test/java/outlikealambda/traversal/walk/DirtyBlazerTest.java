@@ -24,7 +24,6 @@ public class DirtyBlazerTest {
 
 	private static DirtyBlazer fixture = new DirtyBlazer(nav);
 
-
 	@Test
 	public void blazeBasic() {
 		try (Transaction tx = neo4j.getGraphDatabaseService().beginTx()) {

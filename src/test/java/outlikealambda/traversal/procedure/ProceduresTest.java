@@ -10,6 +10,7 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.harness.junit.Neo4jRule;
 import outlikealambda.procedure.DirtyConnectivity;
+import outlikealambda.procedure.Traverse;
 import outlikealambda.traversal.TestUtils;
 
 import java.util.List;
@@ -20,10 +21,12 @@ import static org.junit.Assert.assertTrue;
 import static outlikealambda.traversal.TestUtils.containsFriendAuthorNameCombo;
 import static outlikealambda.traversal.TestUtils.friendIsInfluencer;
 
-public class DirtyConnectivityTest {
+public class ProceduresTest {
 	@Rule
 	public Neo4jRule neo4j = new Neo4jRule()
-			.withProcedure(DirtyConnectivity.class);
+			.withProcedure(DirtyConnectivity.class)
+			.withProcedure(Traverse.class);
+
 	@Test
 	public void testDefaultTrustPath() {
 		try (
@@ -62,10 +65,9 @@ public class DirtyConnectivityTest {
 
 			// void
 			session.run("CALL dirty.opinion.set(1, 0, 0)");
-			StatementResult result = session.run("CALL dirty.friend.author.opinion(2, 0)");
+			StatementResult result = session.run("CALL friend.author.opinion(2, 0)");
 
 			List<Record> results = result.list();
-
 
 			assertFalse(results.isEmpty());
 			assertEquals(4, results.size());
