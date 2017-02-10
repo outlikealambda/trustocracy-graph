@@ -9,6 +9,7 @@ import outlikealambda.traversal.Relationships;
 import outlikealambda.utils.Optionals;
 import outlikealambda.utils.Traversals;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -79,6 +80,15 @@ public class Navigator {
 
 	public void setOpinion(Node author, Node opinion) {
 		clearAndLinkOut(author, opinion, authoredType);
+	}
+
+	public void setRanked(Node source, List<Node> rankedTargets) {
+		clearRelationshipOut(source, rankedType);
+
+		for (int i = 0; i < rankedTargets.size(); i++) {
+			source.createRelationshipTo(rankedTargets.get(i), rankedType)
+					.setProperty(Relationships.Fields.RANK, i);
+		}
 	}
 
 	private void clearAndLinkOut(Node source, Node target, RelationshipType rt) {

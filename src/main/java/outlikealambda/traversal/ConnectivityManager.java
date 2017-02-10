@@ -7,10 +7,13 @@ import outlikealambda.traversal.walk.CleanBlazer;
 import outlikealambda.traversal.walk.DirtyBlazer;
 import outlikealambda.traversal.walk.Navigator;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public interface ConnectivityManager {
 	void updateConnectivity(Node source);
+
+	void setRanked(Node source, List<Node> targets);
 
 	void setTarget(Node source, Node target);
 
@@ -25,6 +28,11 @@ public interface ConnectivityManager {
 			@Override
 			public void updateConnectivity(Node source) {
 				update.accept(source);
+			}
+
+			@Override
+			public void setRanked(Node source, List<Node> ranked) {
+				nav.setRanked(source, ranked);
 			}
 
 			@Override
