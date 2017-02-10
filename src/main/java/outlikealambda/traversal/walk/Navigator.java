@@ -35,7 +35,7 @@ public class Navigator {
 	}
 
 	public boolean isDisjoint(Node n) {
-		return n.hasProperty(Nodes.Fields.DISJOINT);
+		return Nodes.Fields.isDisjoint(n);
 	}
 
 	public boolean isAuthor(Node n) {
@@ -59,7 +59,7 @@ public class Navigator {
 		Optionals.ifElse(
 				Optional.of(n).map(Traversals.getSingleOut(connectedType)),
 				Relationship::delete,
-				() -> n.removeProperty(Nodes.Fields.DISJOINT)
+				() -> Nodes.Fields.setDisjoint(n, false)
 		);
 	}
 
@@ -68,7 +68,7 @@ public class Navigator {
 	}
 
 	public void setDisjoint(Node n) {
-		n.setProperty(Nodes.Fields.DISJOINT, true);
+		Nodes.Fields.setDisjoint(n, true);
 	}
 
 	public void setTarget(Node source, Node target) {

@@ -145,7 +145,7 @@ public class DirtyConnectivity {
 		Node user = getPerson(userId);
 
 		getTopics()
-				.map(topic -> (Long) topic.getProperty(Nodes.Fields.ID))
+				.map(Nodes.Fields::getId)
 				.map(ConnectivityManager::dirtyWalk)
 				.forEach(topicManager -> topicManager.updateConnectivity(user));
 	}

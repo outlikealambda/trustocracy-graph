@@ -145,7 +145,7 @@ public class CleanConnectivity {
 		Node user = getPerson(userId);
 
 		getTopics()
-				.map(topic -> (Long) topic.getProperty(Nodes.Fields.ID))
+				.map(Nodes.Fields::getId)
 				.map(ConnectivityManager::unwindAndWalk)
 				.forEach(topicManager -> topicManager.updateConnectivity(user));
 	}
