@@ -77,6 +77,7 @@ public class CleanConnectivity {
 	}
 
 	@Procedure("clean.update")
+	@PerformsWrites
 	public void updateConnectivity(
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
