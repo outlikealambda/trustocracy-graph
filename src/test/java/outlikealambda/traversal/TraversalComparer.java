@@ -11,7 +11,6 @@ import org.neo4j.harness.junit.Neo4jRule;
 import outlikealambda.traversal.walk.Navigator;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -77,7 +76,7 @@ public class TraversalComparer {
 			Map<Node, Node> baseConnectionMap = getConnectionMap();
 
 			neo4j.getGraphDatabaseService().getAllRelationships().stream()
-					.filter(rel -> rel.isType(RelationshipTypes.connected(topicId)))
+					.filter(rel -> rel.isType(Relationships.Types.connected(topicId)))
 					.map(rel -> String.format("(%02d)-[%s]->(%02d)", rel.getStartNode().getId(), rel.getType().name(), rel.getEndNode().getId()))
 					.forEach(System.out::println);
 

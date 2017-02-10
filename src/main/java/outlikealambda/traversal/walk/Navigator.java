@@ -5,7 +5,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import outlikealambda.traversal.Nodes;
-import outlikealambda.traversal.RelationshipTypes;
+import outlikealambda.traversal.Relationships;
 import outlikealambda.utils.Optionals;
 import outlikealambda.utils.Traversals;
 
@@ -20,17 +20,16 @@ import static outlikealambda.utils.Traversals.goStream;
  * graph
  */
 public class Navigator {
-
 	private final RelationshipType manualType;
 	private final RelationshipType authoredType;
 	private final RelationshipType rankedType;
 	private final RelationshipType connectedType;
 
 	public Navigator(long topicId) {
-		this.manualType = RelationshipTypes.manual(topicId);
-		this.authoredType = RelationshipTypes.authored(topicId);
-		this.rankedType = RelationshipTypes.ranked();
-		this.connectedType = RelationshipTypes.connected(topicId);
+		this.manualType = Relationships.Types.manual(topicId);
+		this.authoredType = Relationships.Types.authored(topicId);
+		this.rankedType = Relationships.Types.ranked();
+		this.connectedType = Relationships.Types.connected(topicId);
 	}
 
 	public boolean isConnected(Node n) {

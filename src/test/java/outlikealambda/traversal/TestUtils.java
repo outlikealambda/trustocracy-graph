@@ -73,12 +73,12 @@ public class TestUtils {
 		}
 
 		public Walkable connectManual(String source, String target) {
-			creates.add(connect(source, target, RelationshipTypes.manual(topicId).name()));
+			creates.add(connect(source, target, Relationships.Types.manual(topicId).name()));
 			return this;
 		}
 
 		public Walkable connectAuthored(String source, String target) {
-			creates.add(connect(source, target, RelationshipTypes.authored(topicId).name()));
+			creates.add(connect(source, target, Relationships.Types.authored(topicId).name()));
 			return this;
 		}
 
@@ -88,7 +88,7 @@ public class TestUtils {
 		}
 
 		public Walkable connectConnected(String source, String target) {
-			creates.add(connect(source, target, RelationshipTypes.connected(topicId).name()));
+			creates.add(connect(source, target, Relationships.Types.connected(topicId).name()));
 			return this;
 		}
 
