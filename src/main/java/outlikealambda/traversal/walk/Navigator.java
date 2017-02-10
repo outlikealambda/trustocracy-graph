@@ -38,7 +38,7 @@ public class Navigator {
 	}
 
 	public boolean isDisjoint(Node n) {
-		return n.hasProperty("disjoint");
+		return n.hasProperty(Nodes.Fields.DISJOINT);
 	}
 
 	public boolean isAuthor(Node n) {
@@ -46,7 +46,7 @@ public class Navigator {
 	}
 
 	public boolean isOpinion(Node n) {
-		return n.hasLabel(Nodes.OPINION_LABEL);
+		return n.hasLabel(Nodes.Labels.OPINION);
 	}
 
 	public Node getOpinion(Node author) {
@@ -62,7 +62,7 @@ public class Navigator {
 		Optionals.ifElse(
 				Optional.of(n).map(getSingleOut(connectedType)),
 				Relationship::delete,
-				() -> n.removeProperty("disjoint")
+				() -> n.removeProperty(Nodes.Fields.DISJOINT)
 		);
 	}
 
@@ -71,7 +71,7 @@ public class Navigator {
 	}
 
 	public void setDisjoint(Node n) {
-		n.setProperty("disjoint", true);
+		n.setProperty(Nodes.Fields.DISJOINT, true);
 	}
 
 	public void setTarget(Node source, Node target) {
@@ -128,6 +128,4 @@ public class Navigator {
 		return goStream(n.getRelationships(rankedType, Direction.OUTGOING))
 				.sorted(Traversals.rankComparator);
 	}
-
-
 }

@@ -11,6 +11,7 @@ import org.neo4j.procedure.PerformsWrites;
 import org.neo4j.procedure.Procedure;
 import outlikealambda.output.TraversalResult;
 import outlikealambda.traversal.ConnectivityManager;
+import outlikealambda.traversal.Nodes;
 import outlikealambda.traversal.walk.Navigator;
 import outlikealambda.utils.Traversals;
 
@@ -22,11 +23,6 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toMap;
 
 public class CleanConnectivity {
-	private static final Label PERSON_LABEL = Label.label("Person");
-	private static final String PERSON_ID = "id";
-
-	private static final Label OPINION_LABEL = Label.label("Opinion");
-	private static final String OPINION_ID = "id";
 
 	@Context
 	public GraphDatabaseService gdb;
@@ -146,10 +142,10 @@ public class CleanConnectivity {
 	}
 
 	private Node getPerson(long userId) {
-		return gdb.findNode(PERSON_LABEL, PERSON_ID, userId);
+		return gdb.findNode(Nodes.Labels.PERSON, Nodes.Fields.ID, userId);
 	}
 
 	private Node getOpinion(long opinionId) {
-		return gdb.findNode(OPINION_LABEL, OPINION_ID, opinionId);
+		return gdb.findNode(Nodes.Labels.OPINION, Nodes.Fields.ID, opinionId);
 	}
 }
