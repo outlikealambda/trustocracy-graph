@@ -6,13 +6,12 @@ import outlikealambda.traversal.unwind.Unwinder;
 import outlikealambda.traversal.walk.CleanBlazer;
 import outlikealambda.traversal.walk.DirtyBlazer;
 import outlikealambda.traversal.walk.Navigator;
+import outlikealambda.utils.Traversals;
 
 import java.util.List;
 import java.util.function.Consumer;
 
 public interface ConnectivityManager {
-	void setRanked(Node source, List<Node> targets);
-
 	void setTarget(Node source, Node target);
 
 	void clearTarget(Node source);
@@ -21,14 +20,12 @@ public interface ConnectivityManager {
 
 	void clearOpinion(Node author);
 
+	static void setRanked(Node source, List<Node> ranked) {
+		Traversals.setRanked(source, ranked);
+	}
+
 	static ConnectivityManager create(Navigator nav, Consumer<Node> update) {
 		return new ConnectivityManager() {
-			@Override
-			public void setRanked(Node source, List<Node> ranked) {
-				nav.setRanked(source, ranked);
-				update.accept(source);
-			}
-
 			@Override
 			public void setTarget(Node source, Node target) {
 				nav.setTarget(source, target);

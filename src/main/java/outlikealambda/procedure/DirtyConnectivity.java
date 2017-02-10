@@ -14,11 +14,13 @@ import outlikealambda.traversal.Nodes;
 import outlikealambda.traversal.walk.Navigator;
 import outlikealambda.utils.Traversals;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 public class DirtyConnectivity {
@@ -125,6 +127,22 @@ public class DirtyConnectivity {
 		Node user = getPerson(userId);
 
 		manager.clearOpinion(user);
+	}
+
+	@Procedure("dirty.ranked.set")
+	@PerformsWrites
+	public void setRanked(
+			@Name("userId") long userId,
+			@Name("ranked") List<Long> ranked
+	) {
+		ConnectivityManager.setRanked(
+				getPerson(userId),
+				ranked.stream()
+						.map(this::getPerson)
+						.collect(toList())
+		);
+
+		// TODO: update on all topics?
 	}
 
 	private Node getPerson(long userId) {

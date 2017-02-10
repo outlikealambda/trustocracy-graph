@@ -2,7 +2,6 @@ package outlikealambda.procedure;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.procedure.Context;
