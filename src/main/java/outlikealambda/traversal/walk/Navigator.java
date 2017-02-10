@@ -8,7 +8,6 @@ import outlikealambda.traversal.Nodes;
 import outlikealambda.traversal.Relationships;
 import outlikealambda.utils.Composables;
 import outlikealambda.utils.Optionals;
-import outlikealambda.utils.Traversals;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -48,7 +47,7 @@ public class Navigator {
 
 	public Node getOpinion(Node author) {
 		return Optional.of(author)
-				.map(Traversals.getSingleOut(authoredType))
+				.map(Relationships.getSingleOut(authoredType))
 				.map(Relationship::getEndNode)
 				.orElseThrow(() -> new IllegalArgumentException("Don't call getOpinion unless you're sure you have an author"));
 	}
@@ -57,7 +56,7 @@ public class Navigator {
 	// Is there a way to avoid setting/removing a property on each node?
 	public void clearConnectionState(Node n) {
 		Optionals.ifElse(
-				Optional.of(n).map(Traversals.getSingleOut(connectedType)),
+				Optional.of(n).map(Relationships.getSingleOut(connectedType)),
 				Relationship::delete,
 				() -> Nodes.Fields.setDisjoint(n, false)
 		);
@@ -72,16 +71,16 @@ public class Navigator {
 	}
 
 	public void setTarget(Node source, Node target) {
-		Traversals.clearAndLinkOut(source, target, manualType);
+		Relationships.clearAndLinkOut(source, target, manualType);
 	}
 
 	public void setOpinion(Node author, Node opinion) {
-		Traversals.clearAndLinkOut(author, opinion, authoredType);
+		Relationships.clearAndLinkOut(author, opinion, authoredType);
 	}
 
 	public Relationship getConnectionOut(Node n) {
 		return Optionals.first(n,
-				Stream.of(Traversals.getSingleOut(connectedType), Traversals.getSingleOut(manualType)))
+				Stream.of(Relationships.getSingleOut(connectedType), Relationships.getSingleOut(manualType)))
 				.orElseThrow(() -> new IllegalArgumentException(
 						"getConnectionOut must have a connection"
 				));
@@ -95,8 +94,8 @@ public class Navigator {
 		return Optionals.first(
 					n,
 					Stream.of(
-							Traversals.getSingleOut(authoredType),
-							Traversals.getSingleOut(manualType)))
+							Relationships.getSingleOut(authoredType),
+							Relationships.getSingleOut(manualType)))
 				.map(Stream::of)
 				.orElseGet(() -> getRankedByRank(n));
 	}
@@ -107,6 +106,6 @@ public class Navigator {
 
 	private Stream<Relationship> getRankedByRank(Node n) {
 		return Composables.goStream(n.getRelationships(rankedType, Direction.OUTGOING))
-				.sorted(Traversals.rankComparator);
+				.sorted(Relationships.rankComparator);
 	}
 }

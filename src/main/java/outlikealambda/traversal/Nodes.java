@@ -8,11 +8,13 @@ public class Nodes {
 		public static Label TOPIC = Label.label("Topic");
 		public static Label OPINION = Label.label("Opinion");
 		public static Label PERSON = Label.label("Person");
+
+		private Labels() {}
 	}
 
 	public static class Fields {
 		public static String ID = "id";
-		public static String DISJOINT = "disjoint";
+		private static String DISJOINT = "disjoint";
 
 		public static Long getId(Node node) {
 			return (Long) node.getProperty(ID);
@@ -31,5 +33,9 @@ public class Nodes {
 				node.removeProperty(DISJOINT);
 			}
 		}
+
+		private Fields() {}
 	}
+
+	private Nodes() {}
 }
