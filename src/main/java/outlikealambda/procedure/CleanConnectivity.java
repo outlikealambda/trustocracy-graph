@@ -14,11 +14,13 @@ import outlikealambda.traversal.Nodes;
 import outlikealambda.traversal.walk.Navigator;
 import outlikealambda.utils.Traversals;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 public class CleanConnectivity {
@@ -127,11 +129,36 @@ public class CleanConnectivity {
 		manager.clearOpinion(user);
 	}
 
+	@Procedure("clean.ranked.set")
+	@PerformsWrites
+	public void setRanked(
+			@Name("userId") long userId,
+			@Name("ranked") List<Long> ranked
+	) {
+		ConnectivityManager.setRanked(
+				getPerson(userId),
+				ranked.stream()
+						.map(this::getPerson)
+						.collect(toList())
+		);
+
+		Node user = getPerson(userId);
+
+		getTopics()
+				.map(topic -> (Long) topic.getProperty(Nodes.Fields.ID))
+				.map(ConnectivityManager::unwindAndWalk)
+				.forEach(topicManager -> topicManager.updateConnectivity(user));
+	}
+
 	private Node getPerson(long userId) {
 		return gdb.findNode(Nodes.Labels.PERSON, Nodes.Fields.ID, userId);
 	}
 
 	private Node getOpinion(long opinionId) {
 		return gdb.findNode(Nodes.Labels.OPINION, Nodes.Fields.ID, opinionId);
+	}
+
+	private Stream<Node> getTopics() {
+		return gdb.findNodes(Nodes.Labels.TOPIC).stream();
 	}
 }

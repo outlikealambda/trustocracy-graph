@@ -142,7 +142,12 @@ public class DirtyConnectivity {
 						.collect(toList())
 		);
 
-		// TODO: update on all topics?
+		Node user = getPerson(userId);
+
+		getTopics()
+				.map(topic -> (Long) topic.getProperty(Nodes.Fields.ID))
+				.map(ConnectivityManager::dirtyWalk)
+				.forEach(topicManager -> topicManager.updateConnectivity(user));
 	}
 
 	private Node getPerson(long userId) {
@@ -151,5 +156,9 @@ public class DirtyConnectivity {
 
 	private Node getOpinion(long opinionId) {
 		return gdb.findNode(Nodes.Labels.OPINION, Nodes.Fields.ID, opinionId);
+	}
+
+	private Stream<Node> getTopics() {
+		return gdb.findNodes(Nodes.Labels.TOPIC).stream();
 	}
 }

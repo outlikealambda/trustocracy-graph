@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public interface ConnectivityManager {
+	void updateConnectivity(Node source);
+
 	void setTarget(Node source, Node target);
 
 	void clearTarget(Node source);
@@ -26,6 +28,11 @@ public interface ConnectivityManager {
 
 	static ConnectivityManager create(Navigator nav, Consumer<Node> update) {
 		return new ConnectivityManager() {
+			@Override
+			public void updateConnectivity(Node source) {
+				update.accept(source);
+			}
+
 			@Override
 			public void setTarget(Node source, Node target) {
 				nav.setTarget(source, target);
