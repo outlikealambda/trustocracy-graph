@@ -34,5 +34,9 @@ public final class Relationships {
 		private Types() {}
 	}
 
+	public final static class Fields {
+		public static String RANK = "rank";
+	}
+
 	private Relationships() {}
 }
