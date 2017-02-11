@@ -42,6 +42,8 @@ To run neo4j with the plugin:
 - `CALL dirty.target.clear({sourceId}, {topicId})` - clears any manual selection
 - `CALL dirty.opinion.set({authorId}, {opinionId}, {topicId})` - connects a Person and Opinion, removing any previous opinion
 - `CALL dirty.opinion.clear({authorId}, {topicId})` - clears any Authored connection
-- `CALL dirty.friend.author.opinion({sourceId})` - returns a list of adjoining Persons, and the Opinion they are connected to (however far away it may be).  The path to the opinion is deliberately omitted.
+- `CALL dirty.ranked.set({sourceId}, [{targetId}...])` - sets the adjoining neighbors, ranked by index (0 is closest)
+- `CALL friend.author.opinion({sourceId})` - returns a list of adjoining Persons, and the Author + Opinion they are connected to (however far away it may be).  The path to the opinion is deliberately omitted.
+- `CALL measure.influence({sourceId}, {topicId}` - recursively count the number of nodes connected to the source for a given topic
 
 - Note: replacing `dirty` with `clean` will give you the same endpoints, but with a slower, more provably correct algorithm which we use(d) to verify the dirty algorithm.
