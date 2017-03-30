@@ -10,6 +10,7 @@ import org.neo4j.procedure.Procedure;
 import outlikealambda.output.Influence;
 import outlikealambda.output.TraversalResult;
 import outlikealambda.traversal.Nodes;
+import outlikealambda.traversal.Relationships;
 import outlikealambda.traversal.walk.Navigator;
 import outlikealambda.utils.Traversals;
 
@@ -47,18 +48,15 @@ public class Traverse {
 		Map<Node, Relationship> neighborRelationships = navigator.getRankedAndManualOut(user)
 				.collect(toMap(
 						Relationship::getEndNode,
-						Function.identity()
+						Function.identity(),
+						(first, second) -> Relationships.Types.ranked().equals(first.getType()) ? first : second
 				));
 
 		Map<Node, Node> neighborToAuthor = neighborRelationships.keySet().stream()
 				.filter(navigator::isConnected)
-				.map(neighbor -> Pair.of(
-						neighbor,
-						Traversals.follow(navigator, neighbor)
-				))
 				.collect(toMap(
-						Pair::getLeft,
-						Pair::getRight
+						Function.identity(),
+						neighbor -> Traversals.follow(navigator, neighbor)
 				));
 
 		Map<Node, Node> authorOpinions = neighborToAuthor.values().stream()
