@@ -65,7 +65,7 @@ public class ProceduresTest {
 
 			// void
 			session.run("CALL dirty.opinion.set(1, 0, 0)");
-			StatementResult result = session.run("CALL friend.author.opinion(2, 0)");
+			StatementResult result = session.run("CALL friend.author(2, 0)");
 
 			List<Record> results = result.list();
 
@@ -122,7 +122,7 @@ public class ProceduresTest {
 
 			session.run("CALL dirty.target.set(2, 5, 0)");
 
-			StatementResult result = session.run("CALL friend.author.opinion(2, 0)");
+			StatementResult result = session.run("CALL friend.author(2, 0)");
 
 			List<Record> results = result.list();
 

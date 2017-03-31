@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import outlikealambda.traversal.Relationships;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -83,7 +84,7 @@ public class Person {
 				.orElse("NONE");
 
 		Long rank = Optional.ofNullable(r)
-				.map(rel -> (Long) rel.getProperty("rank"))
+				.map(Relationships::getRank)
 				.orElse(-1L);
 
 		return new Person(name, id, relationship, rank, isInfluencer);

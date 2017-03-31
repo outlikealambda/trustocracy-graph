@@ -40,6 +40,8 @@ public final class Relationships {
 																																 }
 
 		private Types() {}
+
+
 	}
 
 	public final static class Fields {
@@ -71,7 +73,7 @@ public final class Relationships {
 	public static Comparator<Relationship> rankComparator =
 			(left, right) -> getRank(left) < getRank(right) ? -1 : 1;
 
-	private static long getRank(Relationship r) {
+	public static long getRank(Relationship r) {
 		return (long) r.getProperty(Fields.RANK);
 	}
 
