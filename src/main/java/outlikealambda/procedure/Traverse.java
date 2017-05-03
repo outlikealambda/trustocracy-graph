@@ -15,6 +15,7 @@ import outlikealambda.traversal.walk.Navigator;
 import outlikealambda.utils.Traversals;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,14 +84,15 @@ public class Traverse {
 		);
 	}
 
-	private static class UserRelation {
-		private final String name;
-		private final Long id;
-		private final List<String> relationships;
-		private final Long rank;
-		private final Boolean isRanked;
-		private final Boolean isManual;
-		private final Boolean isInfluencer;
+	public static class UserRelation {
+		// public for serialization
+		public final String name;
+		public final Long id;
+		public final List<String> relationships;
+		public final Long rank;
+		public final Boolean isRanked;
+		public final Boolean isManual;
+		public final Boolean isInfluencer;
 
 		private UserRelation(
 				String name,
@@ -151,6 +153,16 @@ public class Traverse {
 
 			return asMap;
 		}
+	}
+
+	@Procedure("friend")
+	public Stream<UserRelation> friend(
+			@Name("userId") long userId
+	) {
+		Node user = getPerson(userId);
+
+		return Relationships.getRankedOutgoing(user)
+				.map(r ->  UserRelation.create(r.getEndNode(), Collections.singletonList(r), false));
 	}
 
 	@Procedure("friend.author")
