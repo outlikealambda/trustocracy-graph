@@ -26,7 +26,7 @@ public class DirtyConnectivity {
 			@Name("targetId") long targetId,
 			@Name("topicId") long topicId
 	) {
-		ConnectivityManager manager = ConnectivityManager.dirtyWalk(topicId);
+		ConnectivityManager manager = ConnectivityManager.dirtyWalker(topicId);
 
 		Node user = getPerson(userId);
 		Node target = getPerson(targetId);
@@ -40,7 +40,7 @@ public class DirtyConnectivity {
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
 	) {
-		ConnectivityManager manager = ConnectivityManager.dirtyWalk(topicId);
+		ConnectivityManager manager = ConnectivityManager.dirtyWalker(topicId);
 
 		Node user = getPerson(userId);
 
@@ -54,7 +54,7 @@ public class DirtyConnectivity {
 			@Name("opinionId") long opinionId,
 			@Name("topicId") long topicId
 	) {
-		ConnectivityManager manager = ConnectivityManager.dirtyWalk(topicId);
+		ConnectivityManager manager = ConnectivityManager.dirtyWalker(topicId);
 
 		Node user = getPerson(userId);
 		Node opinion = getOpinion(opinionId);
@@ -68,7 +68,7 @@ public class DirtyConnectivity {
 			@Name("userId") long userId,
 			@Name("topicId") long topicId
 	) {
-		ConnectivityManager manager = ConnectivityManager.dirtyWalk(topicId);
+		ConnectivityManager manager = ConnectivityManager.dirtyWalker(topicId);
 
 		Node user = getPerson(userId);
 
@@ -92,7 +92,7 @@ public class DirtyConnectivity {
 
 		getTopics()
 				.map(Nodes.Fields::getId)
-				.map(ConnectivityManager::dirtyWalk)
+				.map(ConnectivityManager::dirtyWalker)
 				.forEach(topicManager -> topicManager.updateConnectivity(user));
 	}
 

@@ -70,7 +70,7 @@ public interface ConnectivityManager {
 		);
 	}
 
-	static ConnectivityManager dirtyWalk(long topicId) {
+	static ConnectivityManager dirtyWalker(long topicId) {
 		Navigator nav = new Navigator(topicId);
 		DirtyBlazer blazer = new DirtyBlazer(nav);
 

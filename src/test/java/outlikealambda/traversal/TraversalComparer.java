@@ -34,7 +34,7 @@ public class TraversalComparer {
 	private static Navigator nav = new Navigator(topicId);
 
 	private static ConnectivityManager basic = ConnectivityManager.unwindAndWalk(topicId);
-	private static ConnectivityManager smart = ConnectivityManager.dirtyWalk(topicId);
+	private static ConnectivityManager smart = ConnectivityManager.dirtyWalker(topicId);
 
 	@Test
 	public void forwardWalkIsDeterministic() {
