@@ -42,13 +42,9 @@ public final class Relationships {
 																																 }
 
 		private Types() {}
-
-
 	}
 
-	public final static class Fields {
-		public static String RANK = "rank";
-	}
+	public static String RANK = "rank";
 
 	public static Function<Node, Relationship> getSingleOut(RelationshipType rt) {
 		return getSingle(rt, Direction.OUTGOING);
@@ -74,7 +70,7 @@ public final class Relationships {
 		// build all input ranked relationships
 		for (int i = 0; i < rankedTargets.size(); i++) {
 			source.createRelationshipTo(rankedTargets.get(i), Types.RANKED_TYPE)
-					.setProperty(Fields.RANK, (long) i);
+					.setProperty(RANK, (long) i);
 		}
 	}
 
@@ -86,7 +82,7 @@ public final class Relationships {
 			(left, right) -> getRank(left) < getRank(right) ? -1 : 1;
 
 	public static long getRank(Relationship r) {
-		return (long) r.getProperty(Fields.RANK);
+		return (long) r.getProperty(RANK);
 	}
 
 	private static void clearRelationshipOut(Node source, RelationshipType rt) {
