@@ -5,15 +5,18 @@ import org.junit.Test;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.junit.Neo4jRule;
-import outlikealambda.traversal.Nodes;
 import outlikealambda.traversal.TestUtils;
 import outlikealambda.traversal.walk.Navigator;
+
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 
 public class TraversalsTest {
 	@ClassRule
 	public static Neo4jRule neo4j = new Neo4jRule();
+
+	private static Function<Integer, Node> getPerson = TestUtils.getPerson(neo4j);
 
 	private static int topicId = 64;
 
@@ -46,10 +49,10 @@ public class TraversalsTest {
 
 			neo4j.getGraphDatabaseService().execute(create);
 
-			Node aNode = getPerson(1);
-			Node bNode = getPerson(2);
-			Node cNode = getPerson(3);
-			Node dNode = getPerson(4);
+			Node aNode = getPerson.apply(1);
+			Node bNode = getPerson.apply(2);
+			Node cNode = getPerson.apply(3);
+			Node dNode = getPerson.apply(4);
 
 			assertEquals(aNode, Traversals.follow(nav, aNode));
 			assertEquals(aNode, Traversals.follow(nav, bNode));
@@ -63,9 +66,5 @@ public class TraversalsTest {
 
 			tx.failure();
 		}
-	}
-
-	private Node getPerson(long id) {
-		return neo4j.getGraphDatabaseService().findNode(Nodes.Labels.PERSON, Nodes.Fields.ID, id);
 	}
 }

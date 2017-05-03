@@ -10,6 +10,7 @@ import outlikealambda.traversal.TestUtils;
 import outlikealambda.utils.Traversals;
 
 import java.util.Arrays;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -18,6 +19,8 @@ public class CleanBlazerTest {
 
 	@ClassRule
 	public static Neo4jRule neo4j = new Neo4jRule();
+
+	private static Function<Integer, Node> getPerson = TestUtils.getPerson(neo4j);
 
 	private static int topicId = 64;
 
@@ -56,10 +59,10 @@ public class CleanBlazerTest {
 
 			neo4j.getGraphDatabaseService().execute(create);
 
-			Node aNode = getPerson(1);
-			Node bNode = getPerson(2);
-			Node cNode = getPerson(3);
-			Node dNode = getPerson(4);
+			Node aNode = getPerson.apply(1);
+			Node bNode = getPerson.apply(2);
+			Node cNode = getPerson.apply(3);
+			Node dNode = getPerson.apply(4);
 
 			assertEquals(aNode, Traversals.follow(nav, aNode));
 			assertEquals(aNode, Traversals.follow(nav, bNode));
@@ -86,7 +89,7 @@ public class CleanBlazerTest {
 
 			neo4j.getGraphDatabaseService().execute(create);
 
-			Node bNode = getPerson(2);
+			Node bNode = getPerson.apply(2);
 
 			Traversals.follow(nav, bNode);
 
@@ -125,11 +128,11 @@ public class CleanBlazerTest {
 
 			neo4j.getGraphDatabaseService().execute(create);
 
-			Node aNode = getPerson(1);
-			Node bNode = getPerson(2);
-			Node cNode = getPerson(3);
-			Node dNode = getPerson(4);
-			Node disjointNode = getPerson(5);
+			Node aNode = getPerson.apply(1);
+			Node bNode = getPerson.apply(2);
+			Node cNode = getPerson.apply(3);
+			Node dNode = getPerson.apply(4);
+			Node disjointNode = getPerson.apply(5);
 
 			fixture.go(dNode);
 
@@ -171,11 +174,11 @@ public class CleanBlazerTest {
 
 			neo4j.getGraphDatabaseService().execute(create);
 
-			Node aNode = getPerson(1);
-			Node bNode = getPerson(2);
-			Node cNode = getPerson(3);
-			Node dNode = getPerson(4);
-			Node zNode = getPerson(5);
+			Node aNode = getPerson.apply(1);
+			Node bNode = getPerson.apply(2);
+			Node cNode = getPerson.apply(3);
+			Node dNode = getPerson.apply(4);
+			Node zNode = getPerson.apply(5);
 
 			// Should attempt to go through c, which should cycle and mark all nodes
 			// as disjoint.
@@ -227,11 +230,11 @@ public class CleanBlazerTest {
 
 			neo4j.getGraphDatabaseService().execute(create);
 
-			Node klbNode = getPerson(1);
-			Node mbNode = getPerson(2);
-			Node ngNode = getPerson(3);
-			Node srNode = getPerson(4);
-			Node llNode = getPerson(5);
+			Node klbNode = getPerson.apply(1);
+			Node mbNode = getPerson.apply(2);
+			Node ngNode = getPerson.apply(3);
+			Node srNode = getPerson.apply(4);
+			Node llNode = getPerson.apply(5);
 
 			fixture.go(klbNode);
 			fixture.go(mbNode);
@@ -285,11 +288,11 @@ public class CleanBlazerTest {
 
 			neo4j.getGraphDatabaseService().execute(create);
 
-			Node wsNode = getPerson(1);
-			Node cdNode = getPerson(2);
-			Node slNode = getPerson(3);
-			Node gfNode = getPerson(4);
-			Node crNode = getPerson(5);
+			Node wsNode = getPerson.apply(1);
+			Node cdNode = getPerson.apply(2);
+			Node slNode = getPerson.apply(3);
+			Node gfNode = getPerson.apply(4);
+			Node crNode = getPerson.apply(5);
 
 			// Should attempt to go through c, which should cycle and mark all nodes
 			// as disjoint.
@@ -310,13 +313,5 @@ public class CleanBlazerTest {
 
 			tx.failure();
 		}
-	}
-
-	private Node getPerson(int id) {
-		return neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", id);
-	}
-
-	private Node getOpinion(int id) {
-		return neo4j.getGraphDatabaseService().findNode(Label.label("Opinion"), "id", id);
 	}
 }

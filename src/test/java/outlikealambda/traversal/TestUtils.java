@@ -1,9 +1,14 @@
 package outlikealambda.traversal;
 
 import org.neo4j.driver.v1.Record;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.harness.junit.Neo4jRule;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -30,6 +35,9 @@ public class TestUtils {
 		return r -> r.get("friend").asMap().get("name").equals(friendName);
 	}
 
+	public static Function<Integer, Node> getPerson(Neo4jRule neo4j) {
+		return id -> neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", id);
+	}
 
 	public static Walkable createWalkable(int topicId) {
 		return new Walkable(topicId);

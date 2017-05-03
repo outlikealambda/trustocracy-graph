@@ -13,6 +13,7 @@ import outlikealambda.traversal.walk.Navigator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -25,6 +26,8 @@ public class TraversalComparer {
 
 	@ClassRule
 	public static Neo4jRule neo4j = new Neo4jRule();
+
+	private static Function<Integer, Node> getPerson = TestUtils.getPerson(neo4j);
 
 	private static int topicId = 64;
 
@@ -66,7 +69,7 @@ public class TraversalComparer {
 			Collections.shuffle(personIds);
 
 			final List<Pair<Node, Node>> authorOpinions = IntStream.range(0, opinionCount)
-					.mapToObj(i -> Pair.of(getPerson(personIds.get(i)), getOpinion(i)))
+					.mapToObj(i -> Pair.of(getPerson.apply(personIds.get(i)), getOpinion(i)))
 					.collect(toList());
 
 			System.out.println("Initial Pass");
@@ -137,7 +140,7 @@ public class TraversalComparer {
 
 			List<Pair<Node, Node>> authorOpinions = authorOpinionIds.stream()
 					.map(pair -> Pair.of(
-							getPerson(pair.getLeft()),
+							getPerson.apply(pair.getLeft()),
 							getOpinion(pair.getRight())
 					))
 					.collect(Collectors.toList());
@@ -176,7 +179,7 @@ public class TraversalComparer {
 
 			List<Pair<Node, Node>> authorOpinions = authorOpinionIds.stream()
 					.map(pair -> Pair.of(
-							getPerson(pair.getLeft()),
+							getPerson.apply(pair.getLeft()),
 							getOpinion(pair.getRight())
 					))
 					.collect(Collectors.toList());
@@ -222,8 +225,8 @@ public class TraversalComparer {
 
 		assertEquals(baseConnectionMap.entrySet().size(), shuffledInsert.entrySet().size());
 
-		shuffledInsert.entrySet().forEach(entry ->
-				assertTrue(baseConnectionMap.get(entry.getKey()).equals(entry.getValue()))
+		shuffledInsert.forEach((key, value) ->
+				assertTrue(baseConnectionMap.get(key).equals(value))
 		);
 	}
 
@@ -247,10 +250,6 @@ public class TraversalComparer {
 						Relationship::getStartNode,
 						Relationship::getEndNode
 				));
-	}
-
-	private Node getPerson(int id) {
-		return neo4j.getGraphDatabaseService().findNode(Label.label("Person"), "id", id);
 	}
 
 	private Node getOpinion(int id) {
