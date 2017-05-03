@@ -1,4 +1,4 @@
-package outlikealambda.traversal.procedure;
+package outlikealambda.procedure;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,8 +9,6 @@ import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.harness.junit.Neo4jRule;
-import outlikealambda.procedure.DirtyConnectivity;
-import outlikealambda.procedure.Traverse;
 import outlikealambda.traversal.TestUtils;
 
 import java.util.List;

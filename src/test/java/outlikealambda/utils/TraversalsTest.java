@@ -1,4 +1,4 @@
-package outlikealambda.traversal.utils;
+package outlikealambda.utils;
 
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -8,7 +8,6 @@ import org.neo4j.harness.junit.Neo4jRule;
 import outlikealambda.traversal.Nodes;
 import outlikealambda.traversal.TestUtils;
 import outlikealambda.traversal.walk.Navigator;
-import outlikealambda.utils.Traversals;
 
 import static org.junit.Assert.assertEquals;
 
