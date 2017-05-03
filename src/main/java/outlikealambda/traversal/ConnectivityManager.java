@@ -21,6 +21,7 @@ public interface ConnectivityManager {
 
 	void clearOpinion(Node author);
 
+	// TODO: Only write relationships with changed ranks
 	static void setRanked(Node source, List<Node> ranked) {
 		Relationships.setRanked(source, ranked);
 	}
@@ -55,6 +56,9 @@ public interface ConnectivityManager {
 		};
 	}
 
+	/**
+	 * Initial attempt; non-deterministic
+	 */
 	static ConnectivityManager unwindAndWalk(long topicId) {
 		Navigator nav = new Navigator(topicId);
 		Unwinder unwinder = new BasicUnwinder(nav);

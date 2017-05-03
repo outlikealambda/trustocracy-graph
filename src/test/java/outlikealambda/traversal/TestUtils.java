@@ -91,7 +91,7 @@ public class TestUtils {
 		}
 
 		public Walkable connectRanked(String source, String target, int rank) {
-			creates.add(connect(source, target, String.format("RANKED {rank:%d}", rank)));
+			creates.add(connect(source, target, String.format("RANKED {rank: %d}", rank)));
 			return this;
 		}
 

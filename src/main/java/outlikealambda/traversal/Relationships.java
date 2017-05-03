@@ -4,11 +4,13 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import outlikealambda.utils.Composables;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public final class Relationships {
 	public final static class Types {
@@ -56,18 +58,28 @@ public final class Relationships {
 		return n -> n.getSingleRelationship(rt, d);
 	}
 
+	private static Function<Node, Iterable<Relationship>> getAllOut(RelationshipType rt) {
+		return n -> n.getRelationships(rt);
+	}
+
 	public static void clearAndLinkOut(Node source, Node target, RelationshipType rt) {
 		clearRelationshipOut(source, rt);
 		setRelationshipOut(source, target, rt);
 	}
 
 	public static void setRanked(Node source, List<Node> rankedTargets) {
-		clearRelationshipOut(source, Types.RANKED_TYPE);
+		// clear all ranked relationships
+		getRankedOutgoing(source).forEach(Relationship::delete);
 
+		// build all input ranked relationships
 		for (int i = 0; i < rankedTargets.size(); i++) {
 			source.createRelationshipTo(rankedTargets.get(i), Types.RANKED_TYPE)
-					.setProperty(Fields.RANK, i);
+					.setProperty(Fields.RANK, (long) i);
 		}
+	}
+
+	public static Stream<Relationship> getRankedOutgoing(Node source) {
+		return Composables.goStream(source.getRelationships(Types.RANKED_TYPE, Direction.OUTGOING));
 	}
 
 	public static Comparator<Relationship> rankComparator =
