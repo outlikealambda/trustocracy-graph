@@ -6,6 +6,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
+import outlikealambda.output.Friend;
 import outlikealambda.output.FriendAuthor;
 import outlikealambda.output.Influence;
 import outlikealambda.output.TraversalResult;
@@ -84,15 +85,15 @@ public class Traverse {
 		);
 	}
 
-	public static class UserRelation {
+	private static class UserRelation {
 		// public for serialization
-		public final String name;
-		public final Long id;
-		public final List<String> relationships;
-		public final Long rank;
-		public final Boolean isRanked;
-		public final Boolean isManual;
-		public final Boolean isInfluencer;
+		private final String name;
+		private final Long id;
+		private final List<String> relationships;
+		private final Long rank;
+		private final Boolean isRanked;
+		private final Boolean isManual;
+		private final Boolean isInfluencer;
 
 		private UserRelation(
 				String name,
@@ -111,7 +112,7 @@ public class Traverse {
 			this.isInfluencer = isInfluencer;
 		}
 
-		public static UserRelation create(Node self, List<Relationship> relationships, boolean isInfluencer) {
+		private static UserRelation create(Node self, List<Relationship> relationships, boolean isInfluencer) {
 			List<String> relationshipNames = new ArrayList<>();
 			long rank = -1;
 			boolean isRanked = false;
@@ -156,13 +157,15 @@ public class Traverse {
 	}
 
 	@Procedure("friend")
-	public Stream<UserRelation> friend(
+	public Stream<Friend> friend(
 			@Name("userId") long userId
 	) {
 		Node user = getPerson(userId);
 
 		return Relationships.getRankedOutgoing(user)
-				.map(r ->  UserRelation.create(r.getEndNode(), Collections.singletonList(r), false));
+				.map(r ->  UserRelation.create(r.getEndNode(), Collections.singletonList(r), false))
+				.map(UserRelation::toMap)
+				.map(Friend::new);
 	}
 
 	@Procedure("friend.author")
